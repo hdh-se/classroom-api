@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ManageCourse.Migrations": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "nativeDebugging": false
+    }
+  }
+}
