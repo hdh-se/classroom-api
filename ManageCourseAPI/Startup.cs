@@ -42,37 +42,37 @@ namespace ManageCourseAPI
         public void ConfigureServices(IServiceCollection services)
         {
             //SQL Server Context
-            //var connectionStringUser = Configuration.GetConnectionString("ManagerCourse");
+            var connectionStringUser = Configuration.GetConnectionString("ManagerCourse");
 
-            //services.AddDbContext<AppDbContext>(options =>
-            //{
-            //    options.UseSqlServer(connectionStringUser, b => b.MigrationsAssembly("ManageCourse.Migrations"));
-            //});
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseSqlServer(connectionStringUser, b => b.MigrationsAssembly("ManageCourse.Migrations"));
+            });
 
             //MySql context
-            var connectionStringUser_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
-            services.AddDbContext<AppDbContext>(options => options.UseMySql(
-                connectionStringUser_MYSQL
-                , ServerVersion.Parse("8.0.19-mysql")
-                , b => b.MigrationsAssembly("ManageCourse.Migrations")
-                )
-            , ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+            //var connectionStringUser_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
+            //services.AddDbContext<AppDbContext>(options => options.UseMySql(
+            //    connectionStringUser_MYSQL
+            //    , ServerVersion.Parse("8.0.19-mysql")
+            //    , b => b.MigrationsAssembly("ManageCourse.Migrations")
+            //    )
+            //, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             //SQL Server Context
-            //var connectionStringUserAuth = Configuration.GetConnectionString("User");
-            //services.AddDbContext<AuthDbContext>(options =>
-            //{
-            //    options.UseSqlServer(connectionStringUserAuth, b => b.MigrationsAssembly("ManageCourse.Migrations"));
-            //});
+            var connectionStringUserAuth = Configuration.GetConnectionString("User");
+            services.AddDbContext<AuthDbContext>(options =>
+            {
+                options.UseSqlServer(connectionStringUserAuth, b => b.MigrationsAssembly("ManageCourse.Migrations"));
+            });
 
             //MySql context
-            var connectionStringUserAuth_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
-            services.AddDbContext<AppDbContext>(options => options.UseMySql(
-                connectionStringUserAuth_MYSQL
-                , ServerVersion.Parse("8.0.19-mysql")
-                , b => b.MigrationsAssembly("ManageCourse.Migrations")
-                )
-            , ServiceLifetime.Scoped, ServiceLifetime.Scoped);
+            //var connectionStringUserAuth_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
+            //services.AddDbContext<AppDbContext>(options => options.UseMySql(
+            //    connectionStringUserAuth_MYSQL
+            //    , ServerVersion.Parse("8.0.19-mysql")
+            //    , b => b.MigrationsAssembly("ManageCourse.Migrations")
+            //    )
+            //, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             services.AddIdentity<AppUser, IdentityRole<int>>(options =>
             {
@@ -81,6 +81,7 @@ namespace ManageCourseAPI
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireLowercase = true;
                 options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = true;
             }).AddEntityFrameworkStores<AuthDbContext>()
                 .AddSignInManager<AppSignInManager>()
                 .AddUserManager<AppUserManager>()
