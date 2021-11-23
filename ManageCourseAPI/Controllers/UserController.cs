@@ -163,10 +163,11 @@ namespace ManageCourseAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Logout(string logoutId)
+        public async Task<IActionResult> Logout()
         {
             await SignInManager.SignOutAsync();
-            var logoutRequest = await InteractionService.GetLogoutContextAsync(logoutId);
+            await HttpContext.SignOutAsync(IdentityServerConstants.DefaultCookieAuthenticationScheme);
+            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
 
             return Ok("LoggedOut");
         }
@@ -192,7 +193,7 @@ namespace ManageCourseAPI.Controllers
             var result = await SignInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false);
             if (result.Succeeded)
             {
-                var a = await SignInManager.UpdateExternalAuthenticationTokensAsync(info);
+                await SignInManager.UpdateExternalAuthenticationTokensAsync(info);
                 var userExist = AuthDbContext.Users.Where(t => t.Email == info.Principal.FindFirstValue(ClaimTypes.Email)).FirstOrDefault();
                 var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
                 var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync("courseapi.read");
@@ -215,7 +216,7 @@ namespace ManageCourseAPI.Controllers
             string LastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
             var user = new AppUser
             {
-                UserName = "test",
+                UserName = StringHelper.GenerateCode(5),
                 Email = email,
                 FirstName = FirstName,
                 LastName = LastName,

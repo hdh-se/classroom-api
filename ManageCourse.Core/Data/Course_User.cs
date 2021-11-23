@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ManageCourse.Core.Data
 {
-    public class Course_User: Audit
+    public class Course_User: Audit, IHasId
     {
         public int Id { get; set; }
         public int UserId { get; set; }

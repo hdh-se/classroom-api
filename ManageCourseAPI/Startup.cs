@@ -121,6 +121,7 @@ namespace ManageCourseAPI
             }).AddGoogle("Google", options =>
             {
                 options.SaveTokens = true;
+
                 options.ClientId = "738829553818-v8ci3noh3g7vr3rce4ob1f70dcd59pn9.apps.googleusercontent.com";
                 options.ClientSecret = "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";
             });

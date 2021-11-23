@@ -95,8 +95,8 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var isParticipate = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id).Any();
-            if (!isParticipate)
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id).FirstOrDefault();
+            if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -107,11 +107,14 @@ namespace ManageCourseAPI.Controllers
                 });
             }
             var coursers = (await _courseService.GetByIdAsync(id));
-            return Ok(new GeneralResponse<CourseResponse>
+            return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new CourseResponse(coursers),
+                Content = new { 
+                    course = new CourseResponse(coursers),  
+                    role = courseUser.Role
+                },
                 Message = "You haven't been joined this class"
             });
         }
@@ -341,6 +344,68 @@ namespace ManageCourseAPI.Controllers
             };
 
             await _courseService.AddMemberIntoCourseAsync(args);
+
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = "Add member classroom successfull"
+            });
+        }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost("remove-member")]
+        public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] RemoveMemberInCourseRequest courseRequest)
+        {
+            var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
+            if (user == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found user"
+                });
+            }
+
+            var course = await GeneralModelRepository.Get<Course>(courseRequest.CourseId);
+            if (course == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found Course"
+                });
+            }
+
+            if (user.UserName != course.CreateBy)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "You are not owner classroom"
+                });
+            }
+
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
+            if (courseUser == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found user in class"
+                });
+            }
+
+            await GeneralModelRepository.Delete<Course_User>(courseUser.Id);
 
             return Ok(new GeneralResponse<string>
             {
