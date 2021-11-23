@@ -115,7 +115,7 @@ namespace ManageCourseAPI.Controllers
                     course = new CourseResponse(coursers),  
                     role = courseUser.Role
                 },
-                Message = "You haven't been joined this class"
+                Message = "Get class sucessfull"
             });
         }
 
@@ -133,13 +133,13 @@ namespace ManageCourseAPI.Controllers
             _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, token, inviteLink);
             //if (!emailResponse)
             //{
-            return Ok(new GeneralResponse<string>
-            {
-                Status = ApiResponseStatus.Success,
-                Result = ResponseResult.Successfull,
-                Content = "",
-                Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-            });
+            //return Ok(new GeneralResponse<string>
+            //{
+            //    Status = ApiResponseStatus.Success,
+            //    Result = ResponseResult.Successfull,
+            //    Content = "",
+            //    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
+            //});
             //}
 
             return Ok(new GeneralResponse<string>
@@ -157,7 +157,7 @@ namespace ManageCourseAPI.Controllers
         public async Task<IActionResult> GetMemberInCourse(int id)
         {
             var course = await GeneralModelRepository.GetAndCheckExisting<Course>(id);
-
+            
             var getTeachersQuery = new CourseUserQuery
             {
                 CourseId = id,
@@ -181,6 +181,7 @@ namespace ManageCourseAPI.Controllers
             var memberCourseResponse = new MemberCourseResponse
             {
                 Total = listStudent.Count + listTeacher.Count,
+                Owner = course.CreateBy,
                 Teachers = listTeacher,
                 Students = listStudent,
             };
