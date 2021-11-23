@@ -20,6 +20,7 @@ namespace ManageCourseAPI.Model.Response
             ClassCode = course.CourseCode;
             Schedule = course.Schedule;
             Owner = course.CreateBy;
+            CreateUsername = course.CreateBy;
         }
 
         public long Id { get; set; }
@@ -31,5 +32,6 @@ namespace ManageCourseAPI.Model.Response
         public string Description { get; set; }
         public string Schedule { get; set; }
         public string Owner { get; set; }
+        public string CreateUsername { get; set; }
     }
 }
