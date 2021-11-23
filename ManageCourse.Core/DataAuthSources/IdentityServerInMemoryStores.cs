@@ -34,11 +34,22 @@ namespace ManageCourse.Core.DataAuthSources
         {
             new Client
             {
-                AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
+                AllowedGrantTypes = GrantTypes.ResourceOwnerPasswordAndClientCredentials,
                 AllowOfflineAccess = true,
                 AllowedScopes = { "courseapi.read" },
                 AlwaysIncludeUserClaimsInIdToken = true,
                 ClientId = "courseclient",
+                ClientSecrets = { new Secret("CourseApi".Sha256()) },
+                UpdateAccessTokenClaimsOnRefresh = true,
+            },
+            new Client
+            {
+                AllowedGrantTypes = GrantTypes.Hybrid,
+                AllowOfflineAccess = true,
+                AllowedScopes = { "courseapi.read" },
+                AlwaysIncludeUserClaimsInIdToken = true,
+                ClientId = "courseclientexternallogin",
+                RedirectUris = {"http://localhost:3000/login" },
                 ClientSecrets = { new Secret("CourseApi".Sha256()) },
                 UpdateAccessTokenClaimsOnRefresh = true,
             }

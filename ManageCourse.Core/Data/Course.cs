@@ -7,13 +7,15 @@ using System.Threading.Tasks;
 
 namespace ManageCourse.Core.Data
 {
-    public class Course: IHasId
+    public class Course: Audit, IHasId
     {
-        public long Id { get; set; }
-        public long SubjectId { get; set; }
-        public long GradeId { get; set; }
-        public string Name { get; set; }
+        public int Id { get; set; }
+        public int SubjectId { get; set; }
+        public int GradeId { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
+        public int Credits { get; set; }
         public string Schedule { get; set; }
+        public ICollection<Course_User> Course_Users { get; set; }
     }
 }

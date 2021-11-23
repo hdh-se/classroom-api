@@ -13,16 +13,21 @@ namespace ManageCourseAPI.Model.Response
             Id = course.Id;
             SubjectId = course.SubjectId;
             GradeId = course.GradeId;
-            Name = course.Name;
+            Title = course.Title;
+            Credits = course.Credits;
+            Title = course.Title;
             Description = course.Description;
             Schedule = course.Schedule;
+            Owner = course.CreateBy;
         }
 
         public long Id { get; set; }
         public long SubjectId { get; set; }
         public long GradeId { get; set; }
-        public string Name { get; set; }
+        public string Title { get; set; }
+        public int Credits { get; set; }
         public string Description { get; set; }
         public string Schedule { get; set; }
+        public string Owner { get; set; }
     }
 }

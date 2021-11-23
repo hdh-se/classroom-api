@@ -11,7 +11,7 @@ namespace ManageCourse.Core.Services
     public interface ICourseService
     {
         public Task<Course> CreateCourseAsync(CreateCourseArgs courseArgs);
-        public Task<List<Course>> GetCourseAsync();
+        public Task<Course_User> AddStudentIntoCourseAsync(AddStudentIntoCourseArgs studentIntoCourseArgs);
         public Task<Course> GetByIdAsync(long id);
     }
 }

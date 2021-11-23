@@ -1,17 +1,18 @@
 ﻿using LinqKit;
 using ManageCourse.Core.Data;
+using ManageCourse.Core.Model.Queries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace ManageCourse.Core.Model.Queries
+namespace ManageCourseAPI.Model.Queries
 {
-    public class CourseQuery: BaseEFQuery<Course>
+    public class CourseQuery : BaseEFQuery<Course>
     {
-        public string Name { get; set; }
+        public string Title { get; set; }
+        public string CurrentUser { get; set; }
 
 
         public override List<string> GetIncludeNavigationPaths()
@@ -22,9 +23,10 @@ namespace ManageCourse.Core.Model.Queries
         public override ExpressionStarter<Course> GetQueryConditions()
         {
             var predicate = base.GetQueryConditions();
-            if (!string.IsNullOrEmpty(Name))
+
+            if (!string.IsNullOrEmpty(Title))
             {
-                predicate.And(c => c.Name.Contains(Name));
+                predicate.And(c => c.Title.Contains(Title));
             }
             return predicate;
         }

@@ -1,3 +1,4 @@
+using IdentityServer4;
 using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
 using ManageCourse.Core.DbContexts;
@@ -5,6 +6,8 @@ using ManageCourse.Core.Repositories;
 using ManageCourse.Core.Services;
 using ManageCourse.Core.Services.Implementation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -106,26 +109,20 @@ namespace ManageCourseAPI
             builder.AddDeveloperSigningCredential();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-                {
-                    options.RequireHttpsMetadata = false;
-                    options.SaveToken = true;
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ClockSkew = TimeSpan.Zero,
-                        RequireSignedTokens = false,
-                        ValidateAudience = true,
-                        ValidateIssuer = false,
-                        ValidateIssuerSigningKey = false,
-                        ValidateLifetime = true,
-                        SignatureValidator = delegate (string token, TokenValidationParameters parameters)
-                        {
-                            var jwt = new JwtSecurityToken(token);
-                            return jwt;
-                        },
-                    };
+                .AddIdentityServerAuthentication(JwtBearerDefaults.AuthenticationScheme, options => {
+                    options.Authority = "https://localhost:44344";
+                    options.ApiName = "courseapi";
                 });
-
+                
+            services.AddAuthentication(options =>
+            {
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            }).AddGoogle("Google", options =>
+            {
+                options.SaveTokens = true;
+                options.ClientId = "738829553818-v8ci3noh3g7vr3rce4ob1f70dcd59pn9.apps.googleusercontent.com";
+                options.ClientSecret = "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";
+            });
             services.AddScoped<AppUserManager>();
             services.AddScoped<AppUserStore>();
             services.TryAddScoped<ICourseService, CourseService>();

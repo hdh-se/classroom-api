@@ -15,11 +15,15 @@ namespace ManageCourse.Migrations
         {
             DbContextOptionsBuilder<AppDbContext> optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
             string connstr = "localhost";
-            _ = optionsBuilder.UseMySql(connstr, ServerVersion.Parse("8.0.19-mysql"), options =>
+            //_ = optionsBuilder.UseMySql(connstr, ServerVersion.Parse("8.0.19-mysql"), options =>
+            //{
+            //    _ = options.MigrationsAssembly(GetType().Assembly.FullName);
+            //});
+            _ = optionsBuilder.UseSqlServer(connstr, options =>
             {
                 _ = options.MigrationsAssembly(GetType().Assembly.FullName);
             });
-            
+
             return new AppDbContext(optionsBuilder.Options);
         }
     }

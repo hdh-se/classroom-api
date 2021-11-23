@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ManageCourse.Core.Data.Common
+namespace ManageCourse.Core.Constansts
 {
-    public interface IHasId
+    public enum Gender
     {
-        int Id { get; }
+        None = 0,
+        Male = 1,
+        Female = 2
     }
 }

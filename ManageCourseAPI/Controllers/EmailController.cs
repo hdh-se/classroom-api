@@ -1,4 +1,6 @@
-﻿using ManageCourse.Core.DataAuthSources;
+﻿using ManageCourse.Core.Constansts;
+using ManageCourse.Core.DataAuthSources;
+using ManageCourse.Core.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -12,10 +14,12 @@ namespace ManageCourseAPI.Controllers
     public class EmailController: ControllerBase
     {
         private AppUserManager appUserManager;
+        private IGeneralModelRepository generalModelRepository;
 
-        public EmailController(AppUserManager appUserManager)
+        public EmailController(AppUserManager appUserManager, IGeneralModelRepository repository )
         {
             this.appUserManager = appUserManager;
+            this.generalModelRepository = repository;
         }
         [HttpGet]
         [Route("ConfirmEmail")]
@@ -26,6 +30,12 @@ namespace ManageCourseAPI.Controllers
                 return Ok("Not found user");
 
             var result = await appUserManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                user.UserStatus = UserStatus.Active;
+                await  generalModelRepository.Update(user);
+                
+            }
             return Ok(result.Succeeded ? "ConfirmEmail" : "Error");
         }
     }

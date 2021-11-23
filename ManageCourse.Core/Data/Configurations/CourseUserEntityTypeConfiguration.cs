@@ -8,12 +8,13 @@ using System.Threading.Tasks;
 
 namespace ManageCourse.Core.Data.Configurations
 {
-    public class CourseStudentEntityTypeConfiguration : IEntityTypeConfiguration<Course_Student>
+    public class CourseUserEntityTypeConfiguration : IEntityTypeConfiguration<Course_User>
     {
-        public void Configure(EntityTypeBuilder<Course_Student> builder)
+        public void Configure(EntityTypeBuilder<Course_User> builder)
         {
-            builder.ToTable("CourseStudent");
+            builder.ToTable("CourseUser");
             builder.Property("Id").ValueGeneratedOnAdd();
+            builder.HasOne(x => x.Course).WithMany(y => y.Course_Users).HasForeignKey(x => x.CourseId).OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

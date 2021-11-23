@@ -4,6 +4,7 @@ using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
 using ManageCourse.Core.DbContexts;
 using ManageCourse.Core.DTOs;
+using ManageCourse.Core.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -49,10 +50,10 @@ namespace ManageCourse.Core.Services.Implementation
                 var isOldPasswordValid = await CheckOldPassword(user, data.OldPassword);
                 if (!isOldPasswordValid)
                 {
-                    throw  new NotImplementedException("Invalid username or password.");
+                    throw new NotImplementedException("Invalid username or password.");
                 }
             }
-           
+
             var setPasswordResult = await UserManager.SetUserPasswordAsync(user, data.NewPassword);
             if (!setPasswordResult.Succeeded)
             {
@@ -65,7 +66,7 @@ namespace ManageCourse.Core.Services.Implementation
                 NewPassword = data.NewPassword,
             };
         }
-        
+
         private async Task<bool> CheckOldPassword(AppUser user, string password)
         {
             var checkOldPasswordResult = await UserManager.CheckPasswordAsync(user, password);
@@ -80,7 +81,7 @@ namespace ManageCourse.Core.Services.Implementation
                 throw new NotImplementedException($"User with ID {id} is not found.");
             }
             var fullUser = new FullAppUser(user);
-            
+
             return fullUser;
         }
 
@@ -97,8 +98,12 @@ namespace ManageCourse.Core.Services.Implementation
                 PersonalEmail = data.PersonalEmail,
                 PhoneNumber = data.PhoneNumber,
                 PersonalPhoneNumber = data.PersonalPhoneNumber,
+                CreateBy = data.Username,
+                CreateOn = DateTime.Now,
+                UpdateBy = data.Username,
+                UpdateOn = DateTime.Now
             };
-            
+
             var createResult = await UserManager.CreateUserAsync(user, data.Password);
             if (createResult.Succeeded)
             {
@@ -125,7 +130,7 @@ namespace ManageCourse.Core.Services.Implementation
                                     group new { usrRole.RoleId } by usr.Id into usrRoleGrp
                                     select new UserRoleName { UserId = usrRoleGrp.Key, RoleId = usrRoleGrp.Min(item => item.RoleId) };
             var predicate = PredicateBuilder.New<UserRoleNameJoin>(true);
-           
+
             if (data.Query != null)
             {
                 var normalizedQuery = LookupNormalizer.NormalizeName(data.Query);
@@ -203,7 +208,8 @@ namespace ManageCourse.Core.Services.Implementation
             user.LastName = data.LastName;
             user.PersonalEmail = data.PersonalEmail;
             user.PersonalPhoneNumber = data.PersonalPhoneNumber;
-
+            user.UpdateBy = user.UserName;
+            user.UpdateOn = DateTime.Now;
             var updateResult = await UserManager.UpdateUserAsync(user);
             if (updateResult.Succeeded)
             {
@@ -211,7 +217,7 @@ namespace ManageCourse.Core.Services.Implementation
             }
 
             var error = GetErrorMessages(updateResult.Errors);
-            throw new NotImplementedException( error);
+            throw new NotImplementedException(error);
         }
 
         public Task<UpdateUserRoleResult> UpdateRole(int id, UpdateUserRoleData data)

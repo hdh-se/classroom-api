@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace ManageCourse.Migrations.Migrations.AuthDb
 {
-    public partial class name : Migration
+    public partial class initialcreateAuthDbContext : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -31,11 +31,17 @@ namespace ManageCourse.Migrations.Migrations.AuthDb
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MiddleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Gender = table.Column<int>(type: "int", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NormalizedDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PersonalEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PersonalEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     NormalizedPersonalEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PersonalPhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreateBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreateOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdateBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UpdateOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserStatus = table.Column<int>(type: "int", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),

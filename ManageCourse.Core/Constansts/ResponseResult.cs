@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ManageCourse.Core.Data.Common
+namespace ManageCourse.Core.Constansts
 {
-    public interface IHasId
+    public enum ResponseResult
     {
-        int Id { get; }
+        Error = 0,
+        Successfull = 1,
     }
 }

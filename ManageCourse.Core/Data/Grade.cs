@@ -1,8 +1,10 @@
-﻿namespace ManageCourse.Core.Data
+﻿using ManageCourse.Core.Data.Common;
+
+namespace ManageCourse.Core.Data
 {
-    public class Grade
+    public class Grade: Audit
     {
-        public long Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
     }
