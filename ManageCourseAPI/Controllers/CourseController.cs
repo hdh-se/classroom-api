@@ -1,4 +1,5 @@
-﻿using ManageCourse.Core.Constansts;
+﻿using ManageCourse.Core.Helpers;
+using ManageCourse.Core.Constansts;
 using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
 using ManageCourse.Core.Helpers;
@@ -27,15 +28,18 @@ namespace ManageCourseAPI.Controllers
     {
         private readonly ICourseService _courseService;
         private readonly AppUserManager _appUserManager;
+        private readonly IEmailService _emailService;
 
         public CourseController(
             IGeneralModelRepository generalModelRepository,
             DbContextContainer dbContextContainer,
             ICourseService courseService,
+            IEmailService emailService,
             AppUserManager appUserManager) : base(generalModelRepository, dbContextContainer)
         {
             _courseService = courseService;
             _appUserManager = appUserManager;
+            _emailService = emailService;
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -115,25 +119,26 @@ namespace ManageCourseAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("send-mail")]
-        public  IActionResult SendMail([FromBody] SendMailJoinToCourseRequest sendMailJoinToCourseRequest)
+        public IActionResult SendMail([FromBody] SendMailJoinToCourseRequest sendMailJoinToCourseRequest)
         {
 
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
             var token = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var inviteLink = $"{ConfigClient.URL_CLIENT}/class-detail/{token}";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            if (!emailResponse)
+            //EmailHelper emailHelper = new EmailHelper();
+            //bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
+            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, token, inviteLink);
+            //if (!emailResponse)
+            //{
+            return Ok(new GeneralResponse<string>
             {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Success,
-                    Result = ResponseResult.Successfull,
-                    Content = "",
-                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-                });
-            }
-           
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
+            });
+            //}
+
             return Ok(new GeneralResponse<string>
             {
                 Status = ApiResponseStatus.Success,
@@ -146,10 +151,10 @@ namespace ManageCourseAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/everyone")]
-        public async Task<IActionResult> GetMemberInCourse( int id)
+        public async Task<IActionResult> GetMemberInCourse(int id)
         {
             var course = await GeneralModelRepository.GetAndCheckExisting<Course>(id);
-           
+
             var getTeachersQuery = new CourseUserQuery
             {
                 CourseId = id,
@@ -157,7 +162,7 @@ namespace ManageCourseAPI.Controllers
                 StartAt = 0,
                 MaxResults = 100,
             };
-            
+
             var getStudentsQuery = new CourseUserQuery
             {
                 CourseId = id,
@@ -166,8 +171,8 @@ namespace ManageCourseAPI.Controllers
                 MaxResults = 100,
             };
             var listTeacherIds = (await GetSearchResult(getTeachersQuery, c => c.UserId)).Data;
-            var listTeacher = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listTeacherIds.Contains(user.Id)).Select(user=> new UserResponse(user)).ToListAsync();
-                
+            var listTeacher = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listTeacherIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
+
             var listStudentIds = (await GetSearchResult(getStudentsQuery, c => c.UserId)).Data;
             var listStudent = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listStudentIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
             var memberCourseResponse = new MemberCourseResponse
@@ -241,8 +246,20 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
-            if (course == null)
+            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
+
+            var courseUser = new Course_User
+            {
+                UserId = user.Id,
+                CourseId = course.Id,
+                Role = courseRequest.Role,
+            };
+
+            AuditHelper.CreateAudit(courseUser, user.UserName);
+
+            var returnVal = await GeneralModelRepository.Create<Course_User>(courseUser);
+
+            if (returnVal == null)
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -253,10 +270,19 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            return Ok();
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new
+                {
+                    result = returnVal
+                },
+                Message = "OK"
+            });
         }
 
-            [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("add-member")]
         public async Task<IActionResult> AddStudentIntoCousersAsync([FromBody] AddMemberIntoCourseRequest courseRequest)
         {
@@ -283,7 +309,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found Course"
                 });
             }
-            
+
             if (user.UserName != course.CreateBy)
             {
                 return Ok(new GeneralResponse<string>
@@ -294,7 +320,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-            
+
             var newMember = await _appUserManager.FindByNameAsync(courseRequest.NewMember);
             if (newMember == null)
             {

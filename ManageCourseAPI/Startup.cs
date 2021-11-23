@@ -1,4 +1,5 @@
 using IdentityServer4;
+using ManageCourse.Core.Helpers;
 using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
 using ManageCourse.Core.DbContexts;
@@ -124,6 +125,7 @@ namespace ManageCourseAPI
                 options.ClientSecret = "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";
             });
             services.AddScoped<AppUserManager>();
+            services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<AppUserStore>();
             services.TryAddScoped<ICourseService, CourseService>();
             services.TryAddScoped<IUserService, UserService>();
