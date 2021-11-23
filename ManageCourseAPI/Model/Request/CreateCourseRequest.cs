@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ManageCourse.Core.Constansts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,6 +13,7 @@ namespace ManageCourseAPI.Model.Request
         public string Title { get; set; }
         public string Description { get; set; }
         public int Credits { get; set; }
+        public Role Role { get; set; }
         public string Schedule { get; set; }
         public string CurrentUser { get; set; }
     }

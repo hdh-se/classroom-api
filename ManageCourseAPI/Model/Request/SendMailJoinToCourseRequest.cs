@@ -7,7 +7,8 @@ namespace ManageCourseAPI.Model.Request
 {
     public class SendMailJoinToCourseRequest
     {
-        public string PersonReceive { get; set; }
+        public string MailPersonReceive { get; set; }
         public int CourseId { get; set; }
+        public string ClassCode { get; set; }
     }
 }

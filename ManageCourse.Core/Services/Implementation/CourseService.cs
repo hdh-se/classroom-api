@@ -32,6 +32,7 @@ namespace ManageCourse.Core.Services.Implementation
                 Schedule = courseArgs.Schedule,
                 Description = courseArgs.Description,
                 GradeId = courseArgs.GradeId,
+                CourseCode = StringHelper.GenerateCode(20),
                 Title = courseArgs.Title,
                 Credits = courseArgs.Credits
             };
@@ -42,21 +43,21 @@ namespace ManageCourse.Core.Services.Implementation
             {
                 CourseId = courses.Id,
                 UserId = courseArgs.UserId,
-                Role = Role.Teacher
+                Role = courseArgs.Role != Role.None ? courseArgs.Role : Role.Teacher
             };
             await _generalModelRepository.Create(courseUser);
             return courses;
         }
 
-        public async Task<Course_User> AddStudentIntoCourseAsync(AddStudentIntoCourseArgs studentIntoCourseArgs)
+        public async Task<Course_User> AddMemberIntoCourseAsync(AddMemberIntoCourseArgs memberIntoCourseArgs)
         {
             var courseUser = new Course_User
             {
-                CourseId = studentIntoCourseArgs.CourseId,
-                UserId = studentIntoCourseArgs.UserId,
-                Role = Role.Student
+                CourseId = memberIntoCourseArgs.CourseId,
+                UserId = memberIntoCourseArgs.UserId,
+                Role = memberIntoCourseArgs.Role != Role.None ? memberIntoCourseArgs.Role : Role.Student
             };
-            AuditHelper.CreateAudit(courseUser, studentIntoCourseArgs.CurrentUser);
+            AuditHelper.CreateAudit(courseUser, memberIntoCourseArgs.CurrentUser);
             
             await _generalModelRepository.Create(courseUser);
             return courseUser;

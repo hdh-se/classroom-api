@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ManageCourse.Core.Constansts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,7 @@ namespace ManageCourse.Core.Model.Args
         public int Credits { get; set; }
         public string Schedule { get; set; }
         public string CurrentUser { get; set; }
+        public Role Role { get; set; }
         public int UserId { get; set; }
     }
 }

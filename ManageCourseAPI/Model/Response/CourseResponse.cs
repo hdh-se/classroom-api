@@ -17,6 +17,7 @@ namespace ManageCourseAPI.Model.Response
             Credits = course.Credits;
             Title = course.Title;
             Description = course.Description;
+            ClassCode = course.CourseCode;
             Schedule = course.Schedule;
             Owner = course.CreateBy;
         }
@@ -25,6 +26,7 @@ namespace ManageCourseAPI.Model.Response
         public long SubjectId { get; set; }
         public long GradeId { get; set; }
         public string Title { get; set; }
+        public string ClassCode { get; set; }
         public int Credits { get; set; }
         public string Description { get; set; }
         public string Schedule { get; set; }

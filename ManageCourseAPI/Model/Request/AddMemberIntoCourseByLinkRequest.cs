@@ -1,13 +1,15 @@
-﻿using System;
+﻿using ManageCourse.Core.Constansts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ManageCourseAPI.Model.Request
 {
-    public class AddStudentIntoCourseRequest
+    public class AddMemberIntoCourseByLinkRequest
     {
-        public int CourseId { get; set; }
+        public string Token { get; set; }
+        public Role Role { get; set; }
         public string CurrentUser { get; set; }
     }
 }

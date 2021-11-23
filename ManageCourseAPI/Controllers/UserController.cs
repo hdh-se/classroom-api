@@ -66,6 +66,7 @@ namespace ManageCourseAPI.Controllers
                 PhoneNumber = request.PhoneNumber,
                 PersonalEmail = request.PersonalEmail,
                 PersonalPhoneNumber = request.PersonalPhoneNumber,
+                StudentID = request.StudentID,
                 Username = request.Username,
                 Password = request.Password,
             };

@@ -15,6 +15,7 @@ namespace ManageCourse.Core.DTOs
         public string LastName { get; set; }
         public string PersonalEmail { get; set; }
         public string PersonalPhoneNumber { get; set; }
+        public string StudentID { get; set; }
         public string CurrentUser { get; set; }
     }
 }

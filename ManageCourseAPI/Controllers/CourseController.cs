@@ -5,6 +5,7 @@ using ManageCourse.Core.Helpers;
 using ManageCourse.Core.Model.Args;
 using ManageCourse.Core.Repositories;
 using ManageCourse.Core.Services;
+using ManageCourse.Core.Utilities;
 using ManageCourseAPI.Controllers.Common;
 using ManageCourseAPI.Model.Queries;
 using ManageCourseAPI.Model.Request;
@@ -73,21 +74,12 @@ namespace ManageCourseAPI.Controllers
                 });
         }
 
-        [HttpGet]
-        [Route("{id}")]
-        public async Task<IActionResult> GetByIdAsync(long id)
-        {
-            var coursers = (await _courseService.GetByIdAsync(id));
-            return Ok(coursers);
-        }
-
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
-        [Route("send-mail")]
-        public async Task<IActionResult> SendMail([FromBody] SendMailJoinToCourseRequest sendMailJoinToCourseRequest)
+        [Route("{id}")]
+        public async Task<IActionResult> GetByIdAsync(long id, string currentUser)
         {
-
-            var user = await _appUserManager.FindByNameAsync(sendMailJoinToCourseRequest.PersonReceive);
+            var user = await _appUserManager.FindByNameAsync(currentUser);
             if (user == null)
             {
                 return Ok(new GeneralResponse<string>
@@ -98,18 +90,57 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-            var inviteLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/Email/JoinClass";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(user.Email, inviteLink);
-            if (emailResponse)
+
+            var isParticipate = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id).Any();
+            if (!isParticipate)
             {
-                Console.WriteLine("Email");
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "You haven't been joined this class"
+                });
             }
-            var response = new SingularResponse<UserResponse>
+            var coursers = (await _courseService.GetByIdAsync(id));
+            return Ok(new GeneralResponse<CourseResponse>
             {
-                Result = new UserResponse(user),
-            };
-            return Created($"{Request.Path}/{user.Id}", response);
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new CourseResponse(coursers),
+                Message = "You haven't been joined this class"
+            });
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("send-mail")]
+        public  IActionResult SendMail([FromBody] SendMailJoinToCourseRequest sendMailJoinToCourseRequest)
+        {
+
+            Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
+            var token = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
+            var inviteLink = $"{ConfigClient.URL_CLIENT}/class-detail/{token}";
+            EmailHelper emailHelper = new EmailHelper();
+            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
+            if (!emailResponse)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Success,
+                    Result = ResponseResult.Successfull,
+                    Content = "",
+                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
+                });
+            }
+           
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} successfull"
+            });
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -178,6 +209,7 @@ namespace ManageCourseAPI.Controllers
                 Description = courseRequest.Description,
                 GradeId = courseRequest.GradeId,
                 Title = courseRequest.Title,
+                Role = courseRequest.Role,
                 Credits = courseRequest.Credits,
                 CurrentUser = courseRequest.CurrentUser,
                 UserId = user.Id
@@ -194,8 +226,8 @@ namespace ManageCourseAPI.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("add-student")]
-        public async Task<IActionResult> AddStudentIntoCousersAsync([FromBody] AddStudentIntoCourseRequest courseRequest)
+        [HttpPost("add-member/invite-link")]
+        public async Task<IActionResult> AddStudentIntoCousersByLinkAsync([FromBody] AddMemberIntoCourseByLinkRequest courseRequest)
         {
             var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
             if (user == null)
@@ -208,20 +240,88 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-            var args = new AddStudentIntoCourseArgs
+
+            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
+            if (course == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found Course"
+                });
+            }
+
+            return Ok();
+        }
+
+            [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost("add-member")]
+        public async Task<IActionResult> AddStudentIntoCousersAsync([FromBody] AddMemberIntoCourseRequest courseRequest)
+        {
+            var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
+            if (user == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found user"
+                });
+            }
+
+            var course = await GeneralModelRepository.Get<Course>(courseRequest.CourseId);
+            if (course == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found Course"
+                });
+            }
+            
+            if (user.UserName != course.CreateBy)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found user"
+                });
+            }
+            
+            var newMember = await _appUserManager.FindByNameAsync(courseRequest.NewMember);
+            if (newMember == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = $"{courseRequest.NewMember} found user"
+                });
+            }
+            var args = new AddMemberIntoCourseArgs
             {
                 CourseId = courseRequest.CourseId,
                 CurrentUser = courseRequest.CurrentUser,
-                UserId = user.Id
+                Role = courseRequest.Role != Role.None ? courseRequest.Role : Role.Student,
+                UserId = newMember.Id
             };
-            var courser = await _courseService.AddStudentIntoCourseAsync(args);
+
+            await _courseService.AddMemberIntoCourseAsync(args);
 
             return Ok(new GeneralResponse<string>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
                 Content = "",
-                Message = "Join classroom successfull"
+                Message = "Add member classroom successfull"
             });
         }
     }

@@ -15,6 +15,7 @@ namespace ManageCourseAPI.Model.Request
         public string PersonalEmail { get; set; }
         public bool PersonalEmailConfirmed { get; set; }
         public string NormalizedPersonalEmail { get; set; }
+        public string StudentID { get; set; }
         public string PersonalPhoneNumber { get; set; }
         public string CurrentUser { get; set; }
     }

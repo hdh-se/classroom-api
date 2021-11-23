@@ -98,6 +98,7 @@ namespace ManageCourse.Core.Services.Implementation
                 PersonalEmail = data.PersonalEmail,
                 PhoneNumber = data.PhoneNumber,
                 PersonalPhoneNumber = data.PersonalPhoneNumber,
+                StudentID = data.StudentID,
                 CreateBy = data.Username,
                 CreateOn = DateTime.Now,
                 UpdateBy = data.Username,
@@ -208,6 +209,7 @@ namespace ManageCourse.Core.Services.Implementation
             user.LastName = data.LastName;
             user.PersonalEmail = data.PersonalEmail;
             user.PersonalPhoneNumber = data.PersonalPhoneNumber;
+            user.StudentID = data.StudentID;
             user.UpdateBy = user.UserName;
             user.UpdateOn = DateTime.Now;
             var updateResult = await UserManager.UpdateUserAsync(user);
