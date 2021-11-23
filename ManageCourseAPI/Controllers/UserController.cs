@@ -137,6 +137,31 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost, Route("change-password")]
+        public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest changePasswordRequest)
+        {
+            var user = await AppUserManager.FindByNameAsync(changePasswordRequest.CurrentUser);
+            if (user==null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "User not found"
+                });
+            }
+            var result = await AppUserManager.ChangePasswordAsync(user,changePasswordRequest.CurrentPassWord,changePasswordRequest.NewPassWord);
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = "Update password successfull"
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Logout(string logoutId)
         {
