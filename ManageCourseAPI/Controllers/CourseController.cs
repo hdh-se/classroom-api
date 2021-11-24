@@ -251,8 +251,11 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-
-            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
+            
+            var course = GeneralModelRepository.GetQueryable<Course>().AsEnumerable()
+                .Where(c => !String.IsNullOrEmpty(c.CourseCode) &&
+                StringHelper.Check(courseRequest.Token,c.CourseCode))
+                .FirstOrDefault();
             if (course == null)
             {
                 return Ok(new GeneralResponse<string>

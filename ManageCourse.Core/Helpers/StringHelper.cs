@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ManageCourse.Core.Helpers
+namespace System
 {
     public static class StringHelper
     {
@@ -29,5 +29,9 @@ namespace ManageCourse.Core.Helpers
                 result.Select(x => x.ToString("x2")));
         }
         
+        public static bool Check(string token, string code)
+        {
+            return GenerateHashString(code) == token;
+        }
     }
 }

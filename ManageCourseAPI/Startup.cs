@@ -112,7 +112,7 @@ namespace ManageCourseAPI
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddIdentityServerAuthentication(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
-                    options.Authority = "https://managecourseapi20211123161536.azurewebsites.net/";
+                    options.Authority = "https://localhost:44344";
                     options.ApiName = "courseapi";
                 });
 
@@ -136,32 +136,32 @@ namespace ManageCourseAPI
             services.TryAddScoped<IGeneralModelRepository, GeneralModelRepository>();
             services.AddControllers();
 
-    //        services.AddSwaggerGen(c =>
-    //        {
-    //            c.SwaggerDoc("v1", new OpenApiInfo { Title = "ManageCourseAPI", Version = "v1" });
-    //            var jwtSecurityScheme = new OpenApiSecurityScheme
-    //            {
-    //                Scheme = "bearer",
-    //                BearerFormat = "JWT",
-    //                Name = "JWT Authentication",
-    //                In = ParameterLocation.Header,
-    //                Type = SecuritySchemeType.Http,
-    //                Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ManageCourseAPI", Version = "v1" });
+                var jwtSecurityScheme = new OpenApiSecurityScheme
+                {
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Name = "JWT Authentication",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
 
-    //                Reference = new OpenApiReference
-    //                {
-    //                    Id = JwtBearerDefaults.AuthenticationScheme,
-    //                    Type = ReferenceType.SecurityScheme
-    //                }
-    //            };
+                    Reference = new OpenApiReference
+                    {
+                        Id = JwtBearerDefaults.AuthenticationScheme,
+                        Type = ReferenceType.SecurityScheme
+                    }
+                };
 
-    //            c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+                c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
 
-    //            c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    //{
-    //            { jwtSecurityScheme, Array.Empty<string>() }
-    //});
-    //        });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+                { jwtSecurityScheme, Array.Empty<string>() }
+    });
+            });
             services.AddCors(options =>
             {
                 options.AddPolicy(name: "MyPolicy",
