@@ -1,6 +1,7 @@
 ﻿using IdentityModel;
 using IdentityServer4;
 using IdentityServer4.Models;
+using ManageCourse.Core.Constansts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,7 +50,7 @@ namespace ManageCourse.Core.DataAuthSources
                 AllowedScopes = { "courseapi.read" },
                 AlwaysIncludeUserClaimsInIdToken = true,
                 ClientId = "courseclientexternallogin",
-                RedirectUris = {"http://localhost:3000/login" },
+                RedirectUris = {$"{ConfigClient.URL_CLIENT}/login" },
                 ClientSecrets = { new Secret("CourseApi".Sha256()) },
                 UpdateAccessTokenClaimsOnRefresh = true,
             }
