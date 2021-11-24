@@ -177,11 +177,11 @@ namespace ManageCourseAPI.Controllers
         {
             var listprovider = (await SignInManager.GetExternalAuthenticationSchemesAsync()).FirstOrDefault();
             var properties = SignInManager.ConfigureExternalAuthenticationProperties(listprovider.Name, "https://localhost:44344/users/login-external-callback");
-            return new ChallengeResult(listprovider.Name, properties);
+            return Challenge(properties, listprovider.Name);
         }
 
         [HttpGet, Route("login-external-callback")]
-        public async Task<IActionResult> LoginExternalCallback()
+        public async Task<IActionResult> LoginExternalCallback(string returnUrl)
         {
             var listprovider = (await SignInManager.GetExternalAuthenticationSchemesAsync()).FirstOrDefault();
             var info = await SignInManager.GetExternalLoginInfoAsync();
@@ -198,18 +198,19 @@ namespace ManageCourseAPI.Controllers
                 var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
                 var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync("courseapi.read");
 
-                return Ok(new GeneralResponse<LoginResponse>
-                {
-                    Status = ApiResponseStatus.Success,
-                    Result = ResponseResult.Successfull,
-                    Content = new LoginResponse {
-                        FullName = userExist.NormalizedDisplayName,
-                        Email = userExist.Email,
-                        Username = userExist.UserName,
-                        Token = tokenResponse.AccessToken , 
-                        RefreshToken=""},
-                    Message = "Login successfull"
-                });
+                return Redirect($"{ConfigClient.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={userExist.Email}&username={userExist.UserName}"); 
+                //return Ok(new GeneralResponse<LoginResponse>
+                //{
+                //    Status = ApiResponseStatus.Success,
+                //    Result = ResponseResult.Successfull,
+                //    Content = new LoginResponse {
+                //        FullName = userExist.NormalizedDisplayName,
+                //        Email = userExist.Email,
+                //        Username = userExist.UserName,
+                //        Token = tokenResponse.AccessToken , 
+                //        RefreshToken=""},
+                //    Message = "Login successfull"
+                //});
             }
             string email = info.Principal.FindFirstValue(ClaimTypes.Email);
             string FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? info.Principal.FindFirstValue(ClaimTypes.Name);
@@ -231,27 +232,22 @@ namespace ManageCourseAPI.Controllers
                 var claimsPrincipal = await SignInManager.CreateUserPrincipalAsync(user);
                 var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
                 var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync("courseapi.read");
-                return Ok(new GeneralResponse<LoginResponse>
-                {
-                    Status = ApiResponseStatus.Success,
-                    Result = ResponseResult.Successfull,
-                    Content = new LoginResponse {
-                        FullName = user.NormalizedDisplayName,
-                        Email = user.Email,
-                        Username = user.UserName,
-                        Token = tokenResponse.AccessToken, 
-                        RefreshToken = "" },
-                    Message = "Login successfull"
-                });
+                return Redirect($"{ConfigClient.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={user.Email}&username={user.UserName}"); 
+                //Ok(new GeneralResponse<LoginResponse>
+                //{
+                //    Status = ApiResponseStatus.Success,
+                //    Result = ResponseResult.Successfull,
+                //    Content = new LoginResponse {
+                //        FullName = user.NormalizedDisplayName,
+                //        Email = user.Email,
+                //        Username = user.UserName,
+                //        Token = tokenResponse.AccessToken, 
+                //        RefreshToken = "" },
+                //    Message = "Login successfull"
+                //});
             }
-            
-            return Ok(new GeneralResponse<string>
-            {
-                Status = ApiResponseStatus.Success,
-                Result = ResponseResult.Successfull,
-                Content ="",
-                Message = "Login failed"
-            });
+
+            return Redirect($"{ConfigClient.URL_CLIENT}/login");
         }
     }
 }
