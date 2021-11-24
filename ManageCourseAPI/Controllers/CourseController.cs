@@ -250,7 +250,8 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
+            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && 
+            StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
 
             var courseUser = new Course_User
             {
@@ -287,74 +288,7 @@ namespace ManageCourseAPI.Controllers
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("add-member")]
-        public async Task<IActionResult> AddStudentIntoCousersAsync([FromBody] AddMemberIntoCourseRequest courseRequest)
-        {
-            var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
-            if (user == null)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Error,
-                    Result = ResponseResult.Error,
-                    Content = "",
-                    Message = "Not found user"
-                });
-            }
-
-            var course = await GeneralModelRepository.Get<Course>(courseRequest.CourseId);
-            if (course == null)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Error,
-                    Result = ResponseResult.Error,
-                    Content = "",
-                    Message = "Not found Course"
-                });
-            }
-
-            if (user.UserName != course.CreateBy)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Error,
-                    Result = ResponseResult.Error,
-                    Content = "",
-                    Message = "Not found user"
-                });
-            }
-
-            var newMember = await _appUserManager.FindByNameAsync(courseRequest.NewMember);
-            if (newMember == null)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Error,
-                    Result = ResponseResult.Error,
-                    Content = "",
-                    Message = $"{courseRequest.NewMember} found user"
-                });
-            }
-            var args = new AddMemberIntoCourseArgs
-            {
-                CourseId = courseRequest.CourseId,
-                CurrentUser = courseRequest.CurrentUser,
-                Role = courseRequest.Role != Role.None ? courseRequest.Role : Role.Student,
-                UserId = newMember.Id
-            };
-
-            await _courseService.AddMemberIntoCourseAsync(args);
-
-            return Ok(new GeneralResponse<string>
-            {
-                Status = ApiResponseStatus.Success,
-                Result = ResponseResult.Successfull,
-                Content = "",
-                Message = "Add member classroom successfull"
-            });
-        }
-        
+   
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("remove-member")]
         public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] RemoveMemberInCourseRequest courseRequest)

@@ -8,9 +8,8 @@ namespace ManageCourseAPI.Model.Request
 {
     public class AddMemberIntoCourseRequest
     {
-        public int CourseId { get; set; }
+        public string ClassCode { get; set; }
         public Role Role { get; set; }
-        public string NewMember { get; set; }
         public string CurrentUser { get; set; }
     }
 }

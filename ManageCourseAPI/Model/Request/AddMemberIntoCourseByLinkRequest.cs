@@ -11,5 +11,13 @@ namespace ManageCourseAPI.Model.Request
         public string Token { get; set; }
         public Role Role { get; set; }
         public string CurrentUser { get; set; }
+
+        public string Invitee
+        {
+            get => _invitee;
+            set => _invitee = value;
+        }
+
+        public string _invitee;
     }
 }
