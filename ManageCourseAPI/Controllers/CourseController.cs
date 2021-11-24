@@ -129,20 +129,20 @@ namespace ManageCourseAPI.Controllers
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
             var tokenClassCode = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var tokenEmail = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
-            var inviteLink = $"{ConfigClient.URL_CLIENT}/join-class?classToken={tokenClassCode}&role={sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
-            //EmailHelper emailHelper = new EmailHelper();
-            //bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
-            //if (!emailResponse)
-            //{
-            //return Ok(new GeneralResponse<string>
-            //{
-            //    Status = ApiResponseStatus.Success,
-            //    Result = ResponseResult.Successfull,
-            //    Content = "",
-            //    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-            //});
-            //}
+            var inviteLink = $"{ConfigClient.URL_CLIENT}/class-join?classToken={tokenClassCode}&role={(int)sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
+            EmailHelper emailHelper = new EmailHelper();
+            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
+            //_emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
+            if (!emailResponse)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Success,
+                    Result = ResponseResult.Successfull,
+                    Content = "",
+                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
+                });
+            }
 
             return Ok(new GeneralResponse<string>
             {
