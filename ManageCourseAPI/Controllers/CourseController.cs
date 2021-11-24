@@ -127,7 +127,7 @@ namespace ManageCourseAPI.Controllers
 
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
             var token = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
-            var inviteLink = $"{ConfigClient.URL_CLIENT}/class-detail/{token}";
+            var inviteLink = $"{ConfigClient.URL_CLIENT}/join-class?classToken={token}&Role={sendMailJoinToCourseRequest.Role}";
             //EmailHelper emailHelper = new EmailHelper();
             //bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
             _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, token, inviteLink);

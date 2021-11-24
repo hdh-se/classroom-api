@@ -8,6 +8,6 @@ namespace ManageCourse.Core.Constansts
 {
     public static class ConfigClient
     {
-        public static string URL_CLIENT = "http://localhost:3000/";
+        public static string URL_CLIENT = "http://localhost:3000";
     }
 }
