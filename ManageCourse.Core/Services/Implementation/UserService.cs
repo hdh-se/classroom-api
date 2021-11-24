@@ -202,14 +202,13 @@ namespace ManageCourse.Core.Services.Implementation
                 throw new NotImplementedException($"User with ID {userId} is not found.");
             }
 
-            user.Email = data.Email;
-            user.PhoneNumber = data.PhoneNumber;
-            user.FirstName = data.FirstName;
-            user.MiddleName = data.MiddleName;
-            user.LastName = data.LastName;
-            user.PersonalEmail = data.PersonalEmail;
-            user.PersonalPhoneNumber = data.PersonalPhoneNumber;
-            user.StudentID = data.StudentID;
+            user.PhoneNumber = String.IsNullOrEmpty(data.PhoneNumber)? user.PhoneNumber : data.PhoneNumber;
+            user.FirstName = String.IsNullOrEmpty(data.FirstName)? user.FirstName : data.FirstName;
+            user.MiddleName = String.IsNullOrEmpty(data.MiddleName)? user.MiddleName : data.MiddleName;
+            user.LastName = String.IsNullOrEmpty(data.LastName)? user.LastName : data.LastName;
+            user.PersonalEmail = String.IsNullOrEmpty(data.PersonalEmail)? user.PersonalEmail : data.PersonalEmail;
+            user.PersonalPhoneNumber = String.IsNullOrEmpty(data.PersonalPhoneNumber)? user.PersonalPhoneNumber : data.PersonalPhoneNumber;
+            user.StudentID = String.IsNullOrEmpty(data.StudentID)? user.StudentID : data.StudentID;
             user.UpdateBy = user.UserName;
             user.UpdateOn = DateTime.Now;
             var updateResult = await UserManager.UpdateUserAsync(user);

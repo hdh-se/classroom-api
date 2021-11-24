@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace ManageCourseAPI.Model.Request
 {
-    public class AddMemberIntoCourseByLinkRequest
+    public class UpdateRoleMemberInCourseRequest
     {
-        public string Token { get; set; }
+        public int CourseId { get; set; }
+        public int UserId { get; set; }
         public Role Role { get; set; }
         public string CurrentUser { get; set; }
-        public string Invitee { get; set; }
+
     }
 }

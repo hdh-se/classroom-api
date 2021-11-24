@@ -10,7 +10,6 @@ namespace ManageCourseAPI.Model.Request
     {
         public Role Role { get; set; }
         public string MailPersonReceive { get; set; }
-        public int CourseId { get; set; }
         public string ClassCode { get; set; }
     }
 }

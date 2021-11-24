@@ -128,11 +128,11 @@ namespace ManageCourseAPI.Controllers
             var userData = new UpdateUserProfileData();
             userArgs.CopyPropertiesTo(userData);
             await UserService.UpdateProfile(user.Id, userData);
-            return Ok(new GeneralResponse<AppUser>
+            return Ok(new GeneralResponse<UserResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = user,
+                Content = new UserResponse(user),
                 Message = "Update profile successfull"
             });
         }
@@ -159,6 +159,31 @@ namespace ManageCourseAPI.Controllers
                 Result = ResponseResult.Successfull,
                 Content = "",
                 Message = "Update password successfull"
+            });
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet, Route("profile")]
+        public async Task<IActionResult> GetProfileAsync (string username)
+        {
+            var user = await AppUserManager.FindByNameAsync(username);
+            if (user==null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "User not found"
+                });
+            }
+
+            return Ok(new GeneralResponse<UserResponse>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new UserResponse(user),
+                Message = "Get profile successfull"
             });
         }
 

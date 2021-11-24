@@ -111,8 +111,9 @@ namespace ManageCourseAPI.Controllers
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new { 
-                    course = new CourseResponse(coursers),  
+                Content = new
+                {
+                    course = new CourseResponse(coursers),
                     role = courseUser.Role
                 },
                 Message = "Get class sucessfull"
@@ -126,11 +127,12 @@ namespace ManageCourseAPI.Controllers
         {
 
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
-            var token = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
-            var inviteLink = $"{ConfigClient.URL_CLIENT}/join-class?classToken={token}&role={sendMailJoinToCourseRequest.Role}";
+            var tokenClassCode = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
+            var tokenEmail = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
+            var inviteLink = $"{ConfigClient.URL_CLIENT}/join-class?classToken={tokenClassCode}&role={sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
             //EmailHelper emailHelper = new EmailHelper();
             //bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, token, inviteLink);
+            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
             //if (!emailResponse)
             //{
             //return Ok(new GeneralResponse<string>
@@ -157,7 +159,7 @@ namespace ManageCourseAPI.Controllers
         public async Task<IActionResult> GetMemberInCourse(int id)
         {
             var course = await GeneralModelRepository.GetAndCheckExisting<Course>(id);
-            
+
             var getTeachersQuery = new CourseUserQuery
             {
                 CourseId = id,
@@ -251,44 +253,113 @@ namespace ManageCourseAPI.Controllers
             }
 
             var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
-
-            var courseUser = new Course_User
-            {
-                UserId = user.Id,
-                CourseId = course.Id,
-                Role = courseRequest.Role,
-            };
-
-            AuditHelper.CreateAudit(courseUser, user.UserName);
-
-            var returnVal = await GeneralModelRepository.Create<Course_User>(courseUser);
-
-            if (returnVal == null)
+            if (course == null)
             {
                 return Ok(new GeneralResponse<string>
                 {
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = "Not found Course"
+                    Message = "Not found course"
                 });
             }
 
-            return Ok(new GeneralResponse<object>
+            if (String.IsNullOrEmpty(courseRequest.Invitee))
             {
-                Status = ApiResponseStatus.Success,
-                Result = ResponseResult.Successfull,
-                Content = new
+                if (await AddMemberIntoCourseAsync(user, courseRequest.Role, course.Id))
                 {
-                    result = returnVal
-                },
-                Message = "OK"
+                    return Ok(new GeneralResponse<string>
+                    {
+                        Status = ApiResponseStatus.Success,
+                        Result = ResponseResult.Successfull,
+                        Content = "",
+                        Message = "Add member successfull"
+                    });
+                }
+
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Add member failed"
+                });
+            }
+
+            var invitee = await _appUserManager.FindByNameAsync(courseRequest.Invitee);
+            if (invitee == null)
+            {
+
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Not found inviteed user"
+                });
+            }
+
+            if (await AddMemberIntoCourseAsync(invitee.Id, user.UserName, courseRequest.Role, course.Id))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Success,
+                    Result = ResponseResult.Successfull,
+                    Content = "",
+                    Message = "Add member successfull"
+                });
+            }
+
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Error,
+                Result = ResponseResult.Error,
+                Content = "",
+                Message = "Add member failed"
             });
+        }
+        private async Task<bool> AddMemberIntoCourseAsync(int newMemberId, string currentUser, Role role, int courseId)
+        {
+            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.Role == role && c.UserId == newMemberId && c.CourseId == courseId).Any();
+            if (courseExist)
+            {
+                return false;
+            }
+            var courseUser = new Course_User
+            {
+                UserId = newMemberId,
+                CourseId = courseId,
+                Role = role,
+            };
+
+            AuditHelper.CreateAudit(courseUser, currentUser);
+
+            _ = await GeneralModelRepository.Create<Course_User>(courseUser);
+            return true;
+        }
+        private async Task<bool> AddMemberIntoCourseAsync(AppUser appUser, Role role, int courseId)
+        {
+            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.Role == role && c.UserId == appUser.Id && c.CourseId == courseId).Any();
+            if (courseExist)
+            {
+                return false;
+            }
+            var courseUser = new Course_User
+            {
+                UserId = appUser.Id,
+                CourseId = courseId,
+                Role = role,
+            };
+
+            AuditHelper.CreateAudit(courseUser, appUser.UserName);
+
+            _ = await GeneralModelRepository.Create<Course_User>(courseUser);
+            return true;
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPost("add-member")]
-        public async Task<IActionResult> AddStudentIntoCousersAsync([FromBody] AddMemberIntoCourseRequest courseRequest)
+        [HttpPost("update-role-member")]
+        public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] UpdateRoleMemberInCourseRequest courseRequest)
         {
             var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
             if (user == null)
@@ -321,30 +392,23 @@ namespace ManageCourseAPI.Controllers
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = "Not found user"
+                    Message = "You are not owner classroom"
                 });
             }
 
-            var newMember = await _appUserManager.FindByNameAsync(courseRequest.NewMember);
-            if (newMember == null)
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
+            if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>
                 {
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = $"{courseRequest.NewMember} found user"
+                    Message = "Not found user in class"
                 });
             }
-            var args = new AddMemberIntoCourseArgs
-            {
-                CourseId = courseRequest.CourseId,
-                CurrentUser = courseRequest.CurrentUser,
-                Role = courseRequest.Role != Role.None ? courseRequest.Role : Role.Student,
-                UserId = newMember.Id
-            };
-
-            await _courseService.AddMemberIntoCourseAsync(args);
+            courseUser.Role = courseRequest.Role;
+            await GeneralModelRepository.Update<Course_User>(courseUser);
 
             return Ok(new GeneralResponse<string>
             {
@@ -354,7 +418,7 @@ namespace ManageCourseAPI.Controllers
                 Message = "Add member classroom successfull"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("remove-member")]
         public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] RemoveMemberInCourseRequest courseRequest)

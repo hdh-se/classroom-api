@@ -14,19 +14,22 @@ namespace ManageCourseAPI.Model.Response
         public string FirstName { get; set; }
         public string MiddleName { get; set; }
         public string LastName { get; set; }
+        public Gender Gender { get; set; }
         public string Email { get; set; }
         public string ProfileImageUrl { get; set; }
         public string PersonalEmail { get; set; }
+        public string StudentID { get; set; }
         public string PhoneNumber { get; set; }
         public string PersonalPhoneNumber { get; set; }
-        public string PrimaryRoleName { get; set; }
-        public Guid? DesignationId { get; set; }
         public UserStatus UserStatus { get; set; }
         public UserResponse(AppUser user)
         {
             Id = user.Id;
             Username = user.UserName;
+            ProfileImageUrl = user.ProfileImageUrl;
             Email = user.Email;
+            Gender = user.Gender;
+            StudentID = user.StudentID;
             PhoneNumber = user.PhoneNumber;
             FirstName = user.FirstName;
             MiddleName = user.MiddleName;
