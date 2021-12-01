@@ -69,5 +69,48 @@ namespace ManageCourse.Core.Services.Implementation
             return courses;
         }
 
+        public async Task<Assignments> CreateNewAssignments(CreateNewAssignmentsArgs createNewAssignmentsArgs)
+        {
+            var numberOfAssignments = _generalModelRepository.GetQueryable<Assignments>().Where(c => c.CourseId == createNewAssignmentsArgs.CourseId).Count();
+            var assignments = new Assignments
+            {
+                CourseId = createNewAssignmentsArgs.CourseId,
+                Name = createNewAssignmentsArgs.Name,
+                MaxGrade = createNewAssignmentsArgs.MaxGrade,
+                Description = createNewAssignmentsArgs.Description,
+                Order = numberOfAssignments + 1
+            };
+            AuditHelper.CreateAudit(assignments, createNewAssignmentsArgs.CurrentUser);
+            await _generalModelRepository.Create(assignments);
+            return assignments;
+        }
+
+        public async Task<Assignments> UpdateAssignments(UpdateAssignmentsArgs updateAssignmentsArgs)
+        {
+            var assignment = await _generalModelRepository.Get<Assignments>(updateAssignmentsArgs.Id);
+            assignment.Name = String.IsNullOrEmpty(updateAssignmentsArgs.Name) ? assignment.Name : updateAssignmentsArgs.Name; 
+            assignment.Description = String.IsNullOrEmpty(updateAssignmentsArgs.Description) ? assignment.Description : updateAssignmentsArgs.Description; 
+            assignment.MaxGrade = assignment.MaxGrade > 0 && assignment.MaxGrade != updateAssignmentsArgs.MaxGrade ? updateAssignmentsArgs.MaxGrade : assignment.MaxGrade;
+            AuditHelper.UpdateAudit(assignment, updateAssignmentsArgs.CurrentUser);
+            await _generalModelRepository.Update(assignment);
+            return assignment;
+        }
+
+        public ICollection<Assignments> SortAssignments(SortAssignmentsArgs sortAssignmentsArgs)
+        {
+            var listAssignments = _generalModelRepository.GetQueryable<Assignments>().AsEnumerable().Where(a => a.CourseId == sortAssignmentsArgs.CourseId).ToList();
+            foreach (var assignments in listAssignments)
+            {
+                var order = sortAssignmentsArgs.assignmentSimples.AsEnumerable().Where(a => a.Id == assignments.Id).FirstOrDefault();
+                if (order != null)
+                {
+                    assignments.Order = order.Order;
+                }
+            }
+
+            _appDbContext.Assignments.UpdateRange(listAssignments);
+            _appDbContext.SaveChanges();
+            return listAssignments;
+        }
     }
 }

@@ -18,5 +18,7 @@ namespace ManageCourse.Core.Data
         public int Credits { get; set; }
         public string Schedule { get; set; }
         public ICollection<Course_User> Course_Users { get; set; }
+        public virtual ICollection<Assignments> Assignments { get; set; }
+
     }
 }
