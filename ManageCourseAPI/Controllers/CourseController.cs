@@ -119,6 +119,166 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get class sucessfull"
             });
         }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/assignments")]
+        public async Task<IActionResult> CreateNewAssignmentAsync([FromBody] CreateNewAssignmentsRequest createNewAssignmentsRequest)
+        {
+            if (!(await ValidateUserInClassAsync(createNewAssignmentsRequest.CurrentUser, createNewAssignmentsRequest.CourseId, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Create new asssignments failed!!"
+                });
+            }
+            var args = createNewAssignmentsRequest.MapTo<CreateNewAssignmentsRequest, CreateNewAssignmentsArgs>();
+            var result = await _courseService.CreateNewAssignments(args);
+
+            return Ok(new GeneralResponse<AssignmentsResponse>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new AssignmentsResponse(result),
+                Message = "Get class sucessfull"
+            });
+        }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPut]
+        [Route("{id}/assignments/{assignmentsId}")]
+        public async Task<IActionResult> UpdateAssignmentAsync(int id,int assignmentsId, [FromBody]UpdateAssignmentsRequest updateAssignmentsRequest)
+        {
+            if (!(await ValidateUserInClassAsync(updateAssignmentsRequest.CurrentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Update asssignments failed!!"
+                });
+            }
+            var args = updateAssignmentsRequest.MapTo<UpdateAssignmentsRequest, UpdateAssignmentsArgs>();
+            args.Id = assignmentsId;
+            var result = await _courseService.UpdateAssignments(args);
+            return Ok(new GeneralResponse<AssignmentsResponse>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new AssignmentsResponse(result),
+                Message = "Update asssignments sucessfully"
+            });
+        }
+
+        private async Task<bool> ValidateUserInClassAsync(string username, int courseId, Role role = Role.None)
+        {
+            var user = await _appUserManager.FindByNameAsync(username);
+            if (user == null)
+            {
+                return false;
+            }
+            var coursers = (await _courseService.GetByIdAsync(courseId));
+            if (coursers == null)
+            {
+                return false;
+            }
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id && c.CourseId == courseId).FirstOrDefault();
+            if (courseUser == null)
+            {
+                return false;
+            }
+
+            if (role != Role.None)
+            {
+                return courseUser.Role == role;
+            }
+
+            return true;
+        }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpDelete]
+        [Route("{id}/assignments/{assignmentsId}")]
+        public async Task<IActionResult> DeleteAssignmentsAsync(int id, string currentUser, long assignmentsId)
+        {
+            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Delete asssignments failed!!"
+                });
+            }
+            
+            await GeneralModelRepository.Delete<Assignments>(assignmentsId);
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = "Delete asssignments sucessfull"
+            });
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet]
+        [Route("{id}/assignments")]
+        public async Task<IActionResult> GetAssignmentsAsync(int id, [FromQuery] AssignmentsQuery query)
+        {
+            if (!(await ValidateUserInClassAsync(query.CurrentUser, id)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get asssignments failed!!"
+                });
+            }
+
+            var result =await GetSearchResult(query, a => new AssignmentsResponse(a));
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = result,
+                Message = "Get assignments sucessfully"
+            });
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/assignments-sort")]
+        public async Task<IActionResult> SortAssignmentsAsync(int id, [FromBody]SortAssignmentsRequest sortAssignmentsRequest)
+        {
+            if (!(await ValidateUserInClassAsync(sortAssignmentsRequest.CurrentUser, id)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Sort asssignments failed!!"
+                });
+            }
+            var args = sortAssignmentsRequest.MapTo<SortAssignmentsRequest, SortAssignmentsArgs>();
+            args.CourseId = id;
+            var result = _courseService.SortAssignments(args);
+            var response = result.Select(a => new AssignmentsResponse(a));
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = response,
+                Message = "Sort asssignments sucessfully"
+            });
+        }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
@@ -129,20 +289,20 @@ namespace ManageCourseAPI.Controllers
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
             var tokenClassCode = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var tokenEmail = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
-            var inviteLink = $"{ConfigClient.URL_CLIENT}/join-class?classToken={tokenClassCode}&role={sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
-            //EmailHelper emailHelper = new EmailHelper();
-            //bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
-            //if (!emailResponse)
-            //{
-            //return Ok(new GeneralResponse<string>
-            //{
-            //    Status = ApiResponseStatus.Success,
-            //    Result = ResponseResult.Successfull,
-            //    Content = "",
-            //    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-            //});
-            //}
+            var inviteLink = $"{ConfigClient.URL_CLIENT}/class-join?classToken={tokenClassCode}&role={(int)sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
+            EmailHelper emailHelper = new EmailHelper();
+            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
+            //_emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
+            if (!emailResponse)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Success,
+                    Result = ResponseResult.Successfull,
+                    Content = "",
+                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
+                });
+            }
 
             return Ok(new GeneralResponse<string>
             {
@@ -251,8 +411,11 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-
-            var course = await GeneralModelRepository.GetQueryable<Course>().Where(c => !String.IsNullOrEmpty(c.CourseCode) && StringHelper.GenerateHashString(c.CourseCode) == courseRequest.Token).FirstOrDefaultAsync();
+            
+            var course = GeneralModelRepository.GetQueryable<Course>().AsEnumerable()
+                .Where(c => !String.IsNullOrEmpty(c.CourseCode) &&
+                StringHelper.Check(courseRequest.Token,c.CourseCode))
+                .FirstOrDefault();
             if (course == null)
             {
                 return Ok(new GeneralResponse<string>

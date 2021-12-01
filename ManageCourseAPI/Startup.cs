@@ -112,7 +112,7 @@ namespace ManageCourseAPI
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddIdentityServerAuthentication(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
-                    options.Authority = "https://managecourseapi20211123161536.azurewebsites.net/";
+                    options.Authority = "https://localhost:44344";
                     options.ApiName = "courseapi";
                 });
 

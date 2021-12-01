@@ -16,6 +16,8 @@ namespace ManageCourse.Core.DbContexts
         public DbSet<Department> Departments { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<Course_User> Course_Users { get; set; }
+        public DbSet<Assignments> Assignments { get; set; }
+        public DbSet<Assignments_Student> Assignments_Students { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -25,6 +27,8 @@ namespace ManageCourse.Core.DbContexts
             modelBuilder.ApplyConfiguration(new DepartmentEntityTypeConfiguration());
             modelBuilder.ApplyConfiguration(new CourseEntityTypeConfiguration());
             modelBuilder.ApplyConfiguration(new CourseUserEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new AssignmentsEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new AssignmentsStudentEntityTypeConfiguration());
         }
     }
 }
