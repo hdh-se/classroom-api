@@ -11,6 +11,7 @@ namespace ManageCourseAPI.Model.Queries
 {
     public class AssignmentsQuery : BaseEFQuery<Assignments>
     {
+        public int CourseId { get; set; }
         public string Name { get; set; }
         public string CurrentUser { get; set; }
 
@@ -27,6 +28,11 @@ namespace ManageCourseAPI.Model.Queries
             if (!string.IsNullOrEmpty(Name))
             {
                 predicate.And(c => c.Name.Contains(Name));
+            }
+
+            if (CourseId > 0)
+            {
+                predicate.And(c => c.CourseId == CourseId);
             }
             return predicate;
         }

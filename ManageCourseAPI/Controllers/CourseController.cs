@@ -241,7 +241,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get asssignments failed!!"
                 });
             }
-
+            query.CourseId = id;
             var result =await GetSearchResult(query, a => new AssignmentsResponse(a));
             return Ok(new GeneralResponse<object>
             {
