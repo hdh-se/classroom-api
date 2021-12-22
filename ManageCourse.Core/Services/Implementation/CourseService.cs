@@ -272,5 +272,31 @@ namespace ManageCourse.Core.Services.Implementation
             await _generalModelRepository.Update(grade);
             return true;
         }
+
+        public async Task<bool> UpdateGradeNormal(UpdateGradeNormalArgs updateGrade)
+        {
+            var assignment = await _generalModelRepository.Get<Assignments>(updateGrade.AssignmentId);
+            if (assignment == null || assignment.CourseId != updateGrade.CourseId)
+            {
+                return false;
+            }
+
+            var studentIDs = updateGrade.Grades.Select(g => g.MSSV);
+            var listGradeExist = _generalModelRepository.GetQueryable<Grade>().Where(g => studentIDs.Contains(g.MSSV) && g.AssignmentId == assignment.Id).ToList();
+            foreach (var grade in updateGrade.Grades)
+            {
+                var gradeExist = listGradeExist.Where(g => g.MSSV == grade.MSSV).FirstOrDefault();
+                if (gradeExist != null)
+                {
+                    gradeExist.GradeAssignment = grade.GradeAssignment;
+                    gradeExist.IsFinalized = false;
+                    AuditHelper.UpdateAudit(gradeExist, updateGrade.CurrentUser);
+                    _appDbContext.Update(gradeExist);
+                }
+            }
+
+            await _appDbContext.SaveChangesAsync();
+            return true;
+        }
     }
 }

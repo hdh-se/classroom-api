@@ -6,13 +6,17 @@ using System.Threading.Tasks;
 
 namespace ManageCourse.Core.Model.Args
 {
-    public class UpdateGradeSpecificArgs
+    public class UpdateGradeSpecificArgsBase
     {
-        public int CourseId { get; set; }
-        public int AssignmentsId { get; set; }
         public string MSSV { get; set; }
         public bool IsFinalized { get; set; }
         public float GradeAssignment { get; set; }
+    } 
+    
+    public class UpdateGradeSpecificArgs: UpdateGradeSpecificArgsBase
+    {
+        public int CourseId { get; set; }
+        public int AssignmentsId { get; set; }
         public string CurrentUser { get; set; }
     }
 }

@@ -22,6 +22,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using ExcelDataReader;
 using ManageCourse.Core.Model.Responses;
+using System.Data;
+using ClosedXML.Excel;
+using System.IO;
 
 namespace ManageCourseAPI.Controllers
 {
@@ -492,10 +495,51 @@ namespace ManageCourseAPI.Controllers
             return students;
         }
         
-        //TODO
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
-        [Route("{id}/assignments/{assignmentsId}/update-grade-specific")]
+        [Route("{id}/assignments/{assignmentsId}/update-grade-normal")]
+        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeNormalRequest request)
+        {
+            if (!(await ValidateUserInClassAsync(request.CurrentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get asssignments failed!!"
+                });
+            }
+            var args = new UpdateGradeNormalArgs {
+                AssignmentId = (int)assignmentsId,
+                CourseId = id,
+                CurrentUser = request.CurrentUser,
+                Grades = new List<UpdateGradeSpecificArgsBase>()
+            };
+
+            for (int i = 0; i < request.Scores.Count; i++)
+            {
+                var grade = new UpdateGradeSpecificArgsBase {
+                    MSSV = request.Scores[i].MSSV,
+                    GradeAssignment = request.Scores[i].Grade,
+                    IsFinalized = request.Scores[i].IsFinalized
+                };
+                args.Grades.Add(grade);
+            }
+
+            var result = await _courseService.UpdateGradeNormal(args);
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = result,
+                Message = "Get assignments sucessfully"
+            });
+        }
+
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/assignments/{assignmentsId}/update-grade-finalized")]
         public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeSpecificRequest request)
         {
             if (!(await ValidateUserInClassAsync(request.CurrentUser, id, Role.Teacher)))
@@ -585,6 +629,9 @@ namespace ManageCourseAPI.Controllers
 
             var listStudentIds = (await GetSearchResult(getStudentsQuery, c => c.UserId)).Data;
             var listStudent = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listStudentIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
+            var listStudentCode = listStudent.Select(s => s.StudentID).ToList();
+            var listStudentCodeNotHasAccount = await GeneralModelRepository.GetQueryable<Course_Student>().Where(cs => !listStudentCode.Contains(cs.StudentCode) && cs.CourseId == id).Select(cs => cs.StudentCode).ToListAsync();
+            listStudent.AddRange(await GeneralModelRepository.GetQueryable<Student>().Where(s => listStudentCodeNotHasAccount.Contains(s.StudentID)).Select(s => new UserResponse(s)).ToListAsync());
             var memberCourseResponse = new MemberCourseResponse
             {
                 Total = listStudent.Count + listTeacher.Count,
@@ -601,6 +648,83 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get Member Successfull"
                 });
 
+        }
+
+        [HttpGet]
+        [Route("{id}/download-grade-board")]
+        public FileResult DownloadGradeBoard(int id)
+        {
+            var result = _courseService.GetAllGradeOfCourse(id);
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
+            DataTable dt = new DataTable("GradeBoard");
+            dt.Columns.Add(new DataColumn("Họ và Tên"));
+            dt.Columns.Add(new DataColumn("MSSV"));
+            foreach (var assignment in listAssignment)
+            {
+                dt.Columns.Add(new DataColumn(assignment.Name));
+            }
+
+            foreach (var item in result)
+            {
+                var row = dt.NewRow();
+                row[0] = item.Name;
+                row[1] = item.Mssv;
+                var index = 2;
+                foreach (var score in item.Grades)
+                {
+                    row[index] = score.Grade.ToString() +"/" + score.MaxGrade.ToString();
+                    index++;
+                }
+                dt.Rows.Add(row);
+            }
+
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "GradeBoard.xlsx");
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("download-template-update-member")]
+        public FileResult DownloadTemplateUpdateMember()
+        {
+            DataTable dt = new DataTable("TemplateUpdateMember");
+            dt.Columns.Add(new DataColumn("StudentId"));
+            dt.Columns.Add(new DataColumn("FullName"));
+
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TemplateUpdateMember.xlsx");
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("download-template-update-grade")]
+        public FileResult DownloadTemplateUpdateGrade()
+        {
+            DataTable dt = new DataTable("TemplateUpdateGrade");
+            dt.Columns.Add(new DataColumn("StudentId"));
+            dt.Columns.Add(new DataColumn("Grade"));
+
+            using (XLWorkbook wb = new XLWorkbook())
+            {
+                wb.Worksheets.Add(dt);
+                using (MemoryStream stream = new MemoryStream())
+                {
+                    wb.SaveAs(stream);
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TemplateUpdateGrade.xlsx");
+                }
+            }
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

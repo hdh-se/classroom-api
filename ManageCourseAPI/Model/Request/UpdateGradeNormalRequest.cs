@@ -5,16 +5,10 @@ using System.Threading.Tasks;
 
 namespace ManageCourseAPI.Model.Request
 {
-    public class UpdateGradeSpecificRequestBase
+    public class UpdateGradeNormalRequest
     {
-        public string MSSV { get; set; }
-        public float Grade { get; set; }
         public bool IsFinalized { get; set; }
-    } 
-    
-    public class UpdateGradeSpecificRequest : UpdateGradeSpecificRequestBase
-    {
+        public List<UpdateGradeSpecificRequestBase> Scores { get; set; }
         public string CurrentUser { get; set; }
-
     }
 }

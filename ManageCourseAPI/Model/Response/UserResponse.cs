@@ -38,5 +38,11 @@ namespace ManageCourseAPI.Model.Response
             PersonalPhoneNumber = user.PersonalPhoneNumber;
             UserStatus = user.UserStatus;
         }
+        
+        public UserResponse(Student student)
+        {
+            StudentID = student.StudentID;
+            Username = student.FullName;
+        }
     }
 }
