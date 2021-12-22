@@ -2,6 +2,7 @@ using ManageCourse.Core.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace ManageCourse.Migrations
 {
@@ -74,6 +75,7 @@ namespace ManageCourse.Migrations
 
             //var authDbContext = new AuthDbContext(optionsUserAuth);
             //authDbContext.Database.Migrate();
+            Console.WriteLine("Migration successful");
         }
     }
 }

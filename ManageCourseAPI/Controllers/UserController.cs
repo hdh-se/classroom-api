@@ -276,5 +276,28 @@ namespace ManageCourseAPI.Controllers
 
             return Redirect($"{ConfigClient.URL_CLIENT}/login");
         }
+
+        [HttpGet, Route("student-code")]
+        public async Task<IActionResult> GetUserByStudentCode(string studentCode)
+        {
+            var result =  AppUserManager.Users.Where(u => u.StudentID == studentCode).Select(u => new UserSimpleResponse(u)).FirstOrDefault();
+            if (result == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = $"Not found user match with studentID: {studentCode}"
+                });
+            }
+            return Ok(new GeneralResponse<UserSimpleResponse>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = result,
+                Message = "Get profile successfull"
+            });
+        }
     }
 }

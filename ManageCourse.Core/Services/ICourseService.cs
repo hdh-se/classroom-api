@@ -19,6 +19,7 @@ namespace ManageCourse.Core.Services
         public ICollection<Assignments> SortAssignments(SortAssignmentsArgs sortAssignmentsArgs);
         public Task<bool> UpdateGrades(UpdateGradesArgs updateGradesArgs);
         public Task<bool> UpdateMemberInClass(UpdateMemberInClassArgs updateMembers);
+        public Task<bool> UpdateGradeSpecific(UpdateGradeSpecificArgs updateGrade);
         public ICollection<GradeOfAssignmentResponse> GetAllGradeOfAssignment(int assignmentId);
         public ICollection<GradeOfCourseResponse> GetAllGradeOfCourse(int courseId)
 ;

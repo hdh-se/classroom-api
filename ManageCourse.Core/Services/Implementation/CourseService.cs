@@ -247,5 +247,29 @@ namespace ManageCourse.Core.Services.Implementation
             }).ToList();
             return result;
         }
+
+        public async Task<bool> UpdateGradeSpecific(UpdateGradeSpecificArgs updateGrade)
+        {
+            var assignment = await _generalModelRepository.Get<Assignments>(updateGrade.AssignmentsId);
+            if (assignment == null || assignment.CourseId != updateGrade.CourseId)
+            {
+                return false;
+            }
+
+            var student = _generalModelRepository.GetQueryable<Student>().Where(s => s.StudentID == updateGrade.MSSV).FirstOrDefault();
+            if (student==null)
+            {
+                return false;
+            }
+            var grade = _generalModelRepository.GetQueryable<Grade>().Where(s => s.AssignmentId == updateGrade.AssignmentsId && s.StudentId == student.Id).FirstOrDefault();
+            if (grade == null)
+            {
+                return false;
+            }
+            grade.GradeAssignment = updateGrade.GradeAssignment;
+            grade.IsFinalized = updateGrade.IsFinalized;
+            await _generalModelRepository.Update(grade);
+            return true;
+        }
     }
 }

@@ -369,7 +369,7 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = updateGrade.CurrentUser,
                 Grades = listGrade
             };
-            var result = await _courseService.UpdateGrades(args);
+            await _courseService.UpdateGrades(args);
 
             return Ok(new GeneralResponse<string>
             {
@@ -383,7 +383,7 @@ namespace ManageCourseAPI.Controllers
         //TODO
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
-        [Route("{id}/update-grade")]
+        [Route("{id}/update-student")]
         public async Task<IActionResult> UpdateMemberAsync(int id, [FromForm] UpdateMemberByFileRequest updateMember)
         {
             if (!(await ValidateUserInClassAsync(updateMember.CurrentUser, id, isCheckOwner: true)))
@@ -428,10 +428,21 @@ namespace ManageCourseAPI.Controllers
                     {
                         while (sreader.Read()) //Each ROW
                         {
+                            var gradeAssignment = 0f;
+                            var mssv = "";
+                            try
+                            {
+                                gradeAssignment = Convert.ToSingle(sreader.GetValue(1));
+                                mssv = Convert.ToString(sreader.GetValue(0));
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
                             var grade = new Grade {
                                 AssignmentId = assignmentId,
-                                GradeAssignment = Convert.ToSingle(sreader.GetValue(1)),
-                                MSSV = Convert.ToString(sreader.GetValue(0))
+                                GradeAssignment = gradeAssignment,
+                                MSSV = mssv
                             };
                             grades.Add(grade);
                         }
@@ -454,10 +465,21 @@ namespace ManageCourseAPI.Controllers
                     {
                         while (sreader.Read()) //Each ROW
                         {
+                            var studentID = "";
+                            var fullName = "";
+                            try
+                            {
+                                studentID = Convert.ToString(sreader.GetValue(0));
+                                fullName = Convert.ToString(sreader.GetValue(1));
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
                             var student = new Student
                             {
-                                StudentID = Convert.ToString(sreader.GetValue(0)),
-                                FullName = Convert.ToString(sreader.GetValue(1))
+                                StudentID = studentID,
+                                FullName = fullName
                             };
                             students.Add(student);
                         }
@@ -468,12 +490,12 @@ namespace ManageCourseAPI.Controllers
         }
         
         //TODO
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade-specific")]
-        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromQuery] AssignmentsQuery query)
+        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeSpecificRequest request)
         {
-            if (!(await ValidateUserInClassAsync(query.CurrentUser, id, Role.Teacher)))
+            if (!(await ValidateUserInClassAsync(request.CurrentUser, id, Role.Teacher)))
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -483,8 +505,13 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get asssignments failed!!"
                 });
             }
-            query.CourseId = id;
-            var result = await GetSearchResult(query, a => new AssignmentsResponse(a));
+            
+            var result = await _courseService.UpdateGradeSpecific(new UpdateGradeSpecificArgs { 
+                    AssignmentsId = (int)assignmentsId, 
+                    CourseId = id, 
+                    GradeAssignment = request.Grade,
+                    MSSV = request.MSSV,
+                    CurrentUser = request.CurrentUser});
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
