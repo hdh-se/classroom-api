@@ -14,6 +14,8 @@ namespace ManageCourse.Core.Data.Configurations
         {
             builder.ToTable("Grade");
             builder.Property("Id").ValueGeneratedOnAdd();
+            builder.HasOne(x => x.Student).WithMany(y => y.Grades).HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(x => x.Assignment).WithMany(y => y.Grades).HasForeignKey(x => x.AssignmentId).OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

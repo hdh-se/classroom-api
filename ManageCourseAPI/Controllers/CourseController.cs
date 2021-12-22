@@ -19,6 +19,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using ExcelDataReader;
 
 namespace ManageCourseAPI.Controllers
 {
@@ -174,7 +176,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        private async Task<bool> ValidateUserInClassAsync(string username, int courseId, Role role = Role.None)
+        private async Task<bool> ValidateUserInClassAsync(string username, int courseId, Role role = Role.None, bool isCheckOwner = false)
         {
             var user = await _appUserManager.FindByNameAsync(username);
             if (user == null)
@@ -195,6 +197,11 @@ namespace ManageCourseAPI.Controllers
             if (role != Role.None)
             {
                 return courseUser.Role == role;
+            }
+            
+            if (isCheckOwner)
+            {
+                return coursers.CreateBy == username;
             }
 
             return true;
@@ -279,6 +286,214 @@ namespace ManageCourseAPI.Controllers
                 Message = "Sort asssignments sucessfully"
             });
         }
+
+        //TODO
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet]
+        [Route("{id}/all-grades")]
+        public async Task<IActionResult> GetAllGradeAsync(int id, string currentUser)
+        {
+            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get all grades asssignments failed!!"
+                });
+            }
+            var result =  _courseService.GetAllGradeOfCourse(id);
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new { 
+                    data = result,
+                    total = result.Count
+                },
+                Message = "Get assignments sucessfully"
+            });
+        }
+        
+        //TODO
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet]
+        [Route("{id}/assignments/{assignmentsId}/all-grades")]
+        public async Task<IActionResult> GetAllGradeAsync(int id, long assignmentsId, string currentUser)
+        {
+            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get all grades asssignments failed!!"
+                });
+            }
+            var result =  _courseService.GetAllGradeOfAssignment((int)assignmentsId);
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new { 
+                    data = result,
+                    total = result.Count
+                },
+                Message = "Get assignments sucessfully"
+            });
+        }
+        
+        //TODO
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/assignments/{assignmentsId}/update-grade")]
+        public async Task<IActionResult> UpdateGradeAsync(int id, long assignmentsId, [FromForm] UpdateGradeRequest updateGrade)
+        {
+            if (!(await ValidateUserInClassAsync(updateGrade.CurrentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get asssignments failed!!"
+                });
+            }
+
+            var listGrade = ConvertFileToListGrade(updateGrade.file, (int)assignmentsId);
+            var args = new UpdateGradesArgs { 
+                AssignmentId = (int)assignmentsId,
+                CourseId = id,
+                CurrentUser = updateGrade.CurrentUser,
+                Grades = listGrade
+            };
+            var result = await _courseService.UpdateGrades(args);
+
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = "Get assignments sucessfully"
+            });
+        }
+        
+        //TODO
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/update-grade")]
+        public async Task<IActionResult> UpdateMemberAsync(int id, [FromForm] UpdateMemberByFileRequest updateMember)
+        {
+            if (!(await ValidateUserInClassAsync(updateMember.CurrentUser, id, isCheckOwner: true)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Update member failed!!"
+                });
+            }
+
+            var listStudent = ConvertFileToListStudent(updateMember.file);
+            var args = new UpdateMemberInClassArgs
+            { 
+                CourseId = id,
+                CurrentUser = updateMember.CurrentUser,
+                Students = listStudent
+            };
+            var result = await _courseService.UpdateMemberInClass(args);
+
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = "",
+                Message = "Get assignments sucessfully"
+            });
+        }
+
+        private ICollection<Grade> ConvertFileToListGrade (IFormFile file, int assignmentId)
+        {
+            var grades = new List<Grade>();
+            if (file != null)
+            {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using (var sreader = ExcelReaderFactory.CreateReader(file.OpenReadStream()))
+                {
+                    sreader.Read();
+                    do
+                    {
+                        while (sreader.Read()) //Each ROW
+                        {
+                            var grade = new Grade {
+                                AssignmentId = assignmentId,
+                                GradeAssignment = Convert.ToSingle(sreader.GetValue(1)),
+                                MSSV = Convert.ToString(sreader.GetValue(0))
+                            };
+                            grades.Add(grade);
+                        }
+                    } while (sreader.NextResult());
+                }
+            }
+            return grades;
+        }
+
+        private ICollection<Student> ConvertFileToListStudent (IFormFile file)
+        {
+            var students = new List<Student>();
+            if (file != null)
+            {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+                using (var sreader = ExcelReaderFactory.CreateReader(file.OpenReadStream()))
+                {
+                    sreader.Read();
+                    do
+                    {
+                        while (sreader.Read()) //Each ROW
+                        {
+                            var student = new Student
+                            {
+                                StudentID = Convert.ToString(sreader.GetValue(0)),
+                                FullName = Convert.ToString(sreader.GetValue(1))
+                            };
+                            students.Add(student);
+                        }
+                    } while (sreader.NextResult());
+                }
+            }
+            return students;
+        }
+        
+        //TODO
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost]
+        [Route("{id}/assignments/{assignmentsId}/update-grade-specific")]
+        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromQuery] AssignmentsQuery query)
+        {
+            if (!(await ValidateUserInClassAsync(query.CurrentUser, id, Role.Teacher)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get asssignments failed!!"
+                });
+            }
+            query.CourseId = id;
+            var result = await GetSearchResult(query, a => new AssignmentsResponse(a));
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = result,
+                Message = "Get assignments sucessfully"
+            });
+        }
+
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]

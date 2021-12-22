@@ -136,6 +136,21 @@ namespace ManageCourseAPI.Controllers
                     Message = "User not found"
                 });
             }
+
+            if (!String.IsNullOrEmpty(userArgs.StudentID))
+            {
+                if (AuthDbContext.Users.Where(u => u.StudentID == userArgs.StudentID && u.Id != user.Id).Any())
+                {
+                    return Ok(new GeneralResponse<string>
+                    {
+                        Status = ApiResponseStatus.Error,
+                        Result = ResponseResult.Error,
+                        Content = "",
+                        Message = "StudentID has been used!!!"
+                    });
+                }
+            }
+
             var userData = new UpdateUserProfileData();
             userArgs.CopyPropertiesTo(userData);
             await UserService.UpdateProfile(user.Id, userData);
