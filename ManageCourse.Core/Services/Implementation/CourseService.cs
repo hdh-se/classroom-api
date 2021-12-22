@@ -236,6 +236,7 @@ namespace ManageCourse.Core.Services.Implementation
         {
             var result = _appDbContext.Students.Select(s => new GradeOfCourseResponse
             {
+                Id = s.Id,
                 Mssv = s.StudentID,
                 Name = s.FullName,
                 Grades = _appDbContext.Grades.Join(_appDbContext.Assignments, 

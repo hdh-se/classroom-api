@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using ExcelDataReader;
+using ManageCourse.Core.Model.Responses;
 
 namespace ManageCourseAPI.Controllers
 {
@@ -304,12 +305,14 @@ namespace ManageCourseAPI.Controllers
                 });
             }
             var result =  _courseService.GetAllGradeOfCourse(id);
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
                 Content = new { 
-                    data = result,
+                    header = listAssignment,
+                    scores = result,
                     total = result.Count
                 },
                 Message = "Get assignments sucessfully"
