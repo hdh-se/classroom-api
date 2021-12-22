@@ -11,12 +11,12 @@ namespace ManageCourse.Core.Model.Responses
     {
         public GradeSimpleResponse(Grade grade, Assignments assignments)
         {
-            AssignmentId = grade.AssignmentId;
+            Id = grade.AssignmentId;
             Grade = grade.GradeAssignment;
             MaxGrade = assignments.MaxGrade;
         }
 
-        public int AssignmentId { get; set; }
+        public int Id { get; set; }
         public float Grade { get; set; }
         public int MaxGrade { get; set; }
     }
