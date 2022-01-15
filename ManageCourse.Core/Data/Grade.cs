@@ -1,8 +1,9 @@
 ﻿using ManageCourse.Core.Data.Common;
+using System.Collections.Generic;
 
 namespace ManageCourse.Core.Data
 {
-    public class Grade: Audit
+    public class Grade: Audit, IHasId
     {
         public int Id { get; set; }
         public int AssignmentId { get; set; }
@@ -14,6 +15,7 @@ namespace ManageCourse.Core.Data
         public bool IsFinalized { get; set; }
         public virtual Assignments Assignment { get; set; }
         public virtual Student Student { get; set; }
+        public ICollection<GradeReview> GradeReviews { get; set; }
 
     }
 }

@@ -9,5 +9,6 @@ namespace ManageCourse.Core.Constansts
     public static class ConfigClient
     {
         public static string URL_CLIENT = "https://classroom-ui-btn06.herokuapp.com";
+        public static string URL_API = "https://localhost:44344";
     }
 }

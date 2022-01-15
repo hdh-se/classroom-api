@@ -19,6 +19,10 @@ namespace ManageCourse.Core.DbContexts
         public DbSet<Course_Student> Course_Students { get; set; }
         public DbSet<Assignments> Assignments { get; set; }
         public DbSet<Assignments_Student> Assignments_Students { get; set; }
+        public DbSet<GradeReview> GradeReviews { get; set; }
+        public DbSet<StudentNotification> StudentNotifications { get; set; }
+        public DbSet<TeacherNotification> TeacherNotifications { get; set; }
+        public DbSet<ReviewComment> ReviewComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +35,10 @@ namespace ManageCourse.Core.DbContexts
             modelBuilder.ApplyConfiguration(new AssignmentsEntityTypeConfiguration());
             modelBuilder.ApplyConfiguration(new AssignmentsStudentEntityTypeConfiguration());
             modelBuilder.ApplyConfiguration(new CourseStudentEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new GradeReviewEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new ReviewCommentEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new StudentNotificationEntityTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new TeacherNotificationEntityTypeConfiguration());
         }
     }
 }

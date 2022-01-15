@@ -30,6 +30,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using static ManageCourse.Core.DataAuthSources.AppUserStore;
+using ManageCourse.Core.Constansts;
 
 namespace ManageCourseAPI
 {
@@ -53,30 +54,12 @@ namespace ManageCourseAPI
                 options.UseSqlServer(connectionStringUser, b => b.MigrationsAssembly("ManageCourse.Migrations"));
             });
 
-            //MySql context
-            //var connectionStringUser_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
-            //services.AddDbContext<AppDbContext>(options => options.UseMySql(
-            //    connectionStringUser_MYSQL
-            //    , ServerVersion.Parse("8.0.19-mysql")
-            //    , b => b.MigrationsAssembly("ManageCourse.Migrations")
-            //    )
-            //, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-
             //SQL Server Context
             var connectionStringUserAuth = Configuration.GetConnectionString("User");
             services.AddDbContext<AuthDbContext>(options =>
             {
                 options.UseSqlServer(connectionStringUserAuth, b => b.MigrationsAssembly("ManageCourse.Migrations"));
             });
-
-            //MySql context
-            //var connectionStringUserAuth_MYSQL = Configuration.GetConnectionString("ManagerCourse_MYSQL");
-            //services.AddDbContext<AppDbContext>(options => options.UseMySql(
-            //    connectionStringUserAuth_MYSQL
-            //    , ServerVersion.Parse("8.0.19-mysql")
-            //    , b => b.MigrationsAssembly("ManageCourse.Migrations")
-            //    )
-            //, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
             services.AddIdentity<AppUser, IdentityRole<int>>(options =>
             {
@@ -112,7 +95,7 @@ namespace ManageCourseAPI
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddIdentityServerAuthentication(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
-                    options.Authority = "https://localhost:44344";
+                    options.Authority = ConfigClient.URL_API;
                     options.ApiName = "courseapi";
                 });
 
@@ -132,6 +115,8 @@ namespace ManageCourseAPI
             services.TryAddScoped<ICourseService, CourseService>();
             services.TryAddScoped<IUserService, UserService>();
             services.TryAddScoped<IAppUserStore, AppUserStore>();
+            services.TryAddScoped<IGradeReviewService, GradeReviewService>();
+            services.TryAddScoped<INotitficationService, NotitficationService>();
             services.TryAddScoped<DbContextContainer>();
             services.TryAddScoped<IGeneralModelRepository, GeneralModelRepository>();
             services.AddControllers();
@@ -157,10 +142,7 @@ namespace ManageCourseAPI
 
                 c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-                { jwtSecurityScheme, Array.Empty<string>() }
-    });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtSecurityScheme, Array.Empty<string>() } });
             });
             services.AddCors(options =>
             {
@@ -189,7 +171,7 @@ namespace ManageCourseAPI
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseIdentityServer();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
