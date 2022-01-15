@@ -101,7 +101,7 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id).FirstOrDefault();
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id && c.CourseId == id).FirstOrDefault();
             if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>

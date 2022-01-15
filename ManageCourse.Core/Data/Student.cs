@@ -21,5 +21,8 @@ namespace ManageCourse.Core.Data
         public virtual ICollection<Assignments_Student> Assignments_Students { get; set; }
         public virtual ICollection<Course_Student> Course_Students { get; set; }
         public virtual ICollection<Grade> Grades { get; set; }
+        public virtual ICollection<GradeReview> GradeReviews { get; set; }
+        public virtual ICollection<ReviewComment> ReviewComments { get; set; }
+        public virtual ICollection<StudentNotification> StudentNotification { get; set; }
     }
 }
