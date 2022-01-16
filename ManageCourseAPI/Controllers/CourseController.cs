@@ -297,7 +297,7 @@ namespace ManageCourseAPI.Controllers
         [Route("{id}/all-grades")]
         public async Task<IActionResult> GetAllGradeAsync(int id, string currentUser)
         {
-            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
+             if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
             {
                 return Ok(new GeneralResponse<string>
                 {

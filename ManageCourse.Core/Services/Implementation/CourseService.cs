@@ -234,7 +234,8 @@ namespace ManageCourse.Core.Services.Implementation
 
         public ICollection<GradeOfCourseResponse> GetAllGradeOfCourse(int courseId)
         {
-            var result = _appDbContext.Students.Select(s => new GradeOfCourseResponse
+            var courseStudent = _appDbContext.Course_Students.Where(cs => cs.CourseId == courseId).Select(cs => cs.StudentId).ToList();
+            var result = _appDbContext.Students.Where(s => courseStudent.Contains(s.Id)).Select(s => new GradeOfCourseResponse
             {
                 Id = s.Id,
                 Mssv = s.StudentID,
@@ -244,7 +245,8 @@ namespace ManageCourse.Core.Services.Implementation
                 Assignments => Assignments.Id, 
                 (Grade, Assignments) => new {
                     Grade = Grade,
-                    Assignment = Assignments}).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId).Select(d => new GradeSimpleResponse(d.Grade, d.Assignment)).ToList()
+                    Assignment = Assignments}).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId)
+                    .Select(d => new GradeSimpleResponse(d.Grade, d.Assignment)).ToList()
             }).ToList();
             return result;
         }

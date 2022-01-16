@@ -40,7 +40,8 @@ namespace ManageCourse.Core.Services.Implementation
 
         public async Task<ICollection<StudentNotification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs)
         {
-            var course = await _appDbContext.Courses.Where(x => x.GradeId == createGradeFinallizeNotificationArgs.GradeId).FirstOrDefaultAsync();
+            var grade = await _generalModelRepository.Get<Grade>(createGradeFinallizeNotificationArgs.GradeId);
+            var course = await _appDbContext.Courses.Where(x => x.Id == grade.Assignment.CourseId).FirstOrDefaultAsync();
             var studentIds = await _appDbContext.Course_Students.Where(x => x.CourseId == course.Id).Select(x => x.StudentId).ToListAsync();
             var studentNotifications = new List<StudentNotification>();
             foreach (var studentId in studentIds)
@@ -74,7 +75,9 @@ namespace ManageCourse.Core.Services.Implementation
         public async Task<ICollection<TeacherNotification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs)
         {
             var gradeReview = await _generalModelRepository.Get<GradeReview>(notificationArgs.GradeReviewId);
-            var course = await _appDbContext.Courses.Where(x => x.GradeId == gradeReview.GradeId).FirstOrDefaultAsync();
+            var grade = await _generalModelRepository.Get<Grade>(gradeReview.GradeId);
+            var assignment = await _generalModelRepository.Get<Assignments>(gradeReview.Grade.AssignmentId);
+            var course = await _appDbContext.Courses.Where(x => x.Id == assignment.CourseId).FirstOrDefaultAsync();
             var teacherIds = await _appDbContext.Course_Users.Where(x => x.CourseId == course.Id && x.Role == Role.Teacher).Select(x => x.UserId).ToListAsync();
             var teacherNotifications = new List<TeacherNotification>();
             foreach (var teacherId in teacherIds)

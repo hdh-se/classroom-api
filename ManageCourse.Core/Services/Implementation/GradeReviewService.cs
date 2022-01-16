@@ -31,6 +31,7 @@ namespace ManageCourse.Core.Services.Implementation
             {
                 GradeExpect = createGradeReviewArgs.GradeExpect,
                 Message = createGradeReviewArgs.Reason,
+                StudentId = createGradeReviewArgs.StudentId,
                 GradeId = createGradeReviewArgs.GradeId,
                 Status = GradeReviewStatus.Pending
             };
