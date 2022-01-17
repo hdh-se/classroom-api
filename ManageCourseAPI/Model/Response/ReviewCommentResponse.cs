@@ -15,7 +15,6 @@ namespace ManageCourseAPI.Model.Response
             StudentId = reviewComment.StudentId;
             TeacherId = reviewComment.TeacherId;
             GradeReviewId = reviewComment.GradeReviewId;
-            Student = reviewComment.Student;
         }
 
         public int Id { get; set; }
@@ -23,7 +22,7 @@ namespace ManageCourseAPI.Model.Response
         public int StudentId { get; set; }
         public int TeacherId { get; set; }
         public int GradeReviewId { get; set; }
-        public Student Student { get; set; }
+        public StudentResponse Student { get; set; }
         public UserResponse Teacher { get; set; }
     }
 }

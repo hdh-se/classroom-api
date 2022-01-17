@@ -11,6 +11,7 @@ namespace ManageCourse.Core.Data
     public class Notification: Audit, IHasId
     {
         public int Id { get; set; }
+        public int UserId { get; set; }
         public bool IsSeen { get; set; }
         public string SenderName { get; set; }
         public TypeNotification TypeNotification { get; set; }

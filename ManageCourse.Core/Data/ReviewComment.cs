@@ -15,6 +15,5 @@ namespace ManageCourse.Core.Data
         public int TeacherId { get; set; }
         public int GradeReviewId { get; set; }
         public virtual GradeReview GradeReview { get; set; }
-        public virtual Student Student { get; set; }
     }
 }

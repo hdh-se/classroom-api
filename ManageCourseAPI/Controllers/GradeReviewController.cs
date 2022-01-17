@@ -45,7 +45,7 @@ namespace ManageCourseAPI.Controllers
         public async Task<IActionResult> GetGradeReviewAsync([FromQuery] GradeReviewQuery gradeReviewQuery)
         {
             var user = await _appUserManager.FindByNameAsync(gradeReviewQuery.CurrentUser);
-            if (!(await ValidateGradeReviewOfUserAsync(gradeReviewQuery.CurrentUser, gradeReviewQuery.CourseId, Role.Student, gradeId: gradeReviewQuery.GradeId, gradeReviewId: gradeReviewQuery.GradeReviewId)))
+            if (!(await ValidateGradeReviewOfUserAsync(gradeReviewQuery.CurrentUser, gradeReviewQuery.CourseId, Role.None, gradeId: gradeReviewQuery.GradeId, gradeReviewId: gradeReviewQuery.GradeReviewId)))
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -71,17 +71,17 @@ namespace ManageCourseAPI.Controllers
         public async Task<IActionResult> GetGradeReviewCommmentsAsync([FromQuery] GetGradeReviewCommmentsQuery commmentsQuery)
         {
             var user = await _appUserManager.FindByNameAsync(commmentsQuery.CurrentUser);
-            if (!(await ValidateGradeReviewOfUserAsync(commmentsQuery.CurrentUser, commmentsQuery.CourseId, Role.Student, gradeId: commmentsQuery.GradeId, gradeReviewId: commmentsQuery.GradeReviewId)))
+            if (!(await ValidateGradeReviewOfUserAsync(commmentsQuery.CurrentUser, commmentsQuery.CourseId, Role.None, gradeId: commmentsQuery.GradeId, gradeReviewId: commmentsQuery.GradeReviewId)))
             {
                 return Ok(new GeneralResponse<string>
                 {
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = "Create new grade review failed!!"
+                    Message = "Get comment grade review failed!!"
                 });
             }
-            var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.StudentID == user.StudentID).FirstOrDefault();
+
             var comments = await GetSearchResult(commmentsQuery, c => new ReviewCommentResponse(c));
             foreach (var comment in comments.Data)
             {
@@ -89,6 +89,12 @@ namespace ManageCourseAPI.Controllers
                 {
                     var teacher = await _appUserManager.FindByIdAsync(comment.TeacherId.ToString());
                     comment.Teacher = new UserResponse(teacher);
+                }
+                
+                if (comment.StudentId > 0)
+                {
+                    var student = await GeneralModelRepository.Get<Student>(comment.StudentId);
+                    comment.Student = new StudentResponse(student);
                 }
 
             }
@@ -190,7 +196,18 @@ namespace ManageCourseAPI.Controllers
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = "Create new comment failed!!"
+                    Message = "Update grade review failed!!"
+                });
+            }
+            var gradeReviewExist = GeneralModelRepository.GetQueryable<GradeReview>().Where(c => c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName).FirstOrDefault();
+            if (gradeReviewExist == null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Update grade review failed!!"
                 });
             }
             var gradeReviewArgs = new UpdateGradeReviewArgs
@@ -217,6 +234,17 @@ namespace ManageCourseAPI.Controllers
         {
             var user = await _appUserManager.FindByNameAsync(gradeReviewRequest.CurrentUser);
             if (!(await ValidateGradeReviewOfUserAsync(gradeReviewRequest.CurrentUser, gradeReviewRequest.CourseId, Role.Teacher, gradeId: gradeReviewRequest.GradeId, gradeReviewId: gradeReviewRequest.GradeReviewId)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Delete grade review failed!!"
+                });
+            }
+            var gradeReviewExist = GeneralModelRepository.GetQueryable<GradeReview>().Where(c => c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName).FirstOrDefault();
+            if (gradeReviewExist == null)
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -261,12 +289,16 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = createStudentComment.CurrentUser
             };
             var reviewComment = await _gradeReviewService.CreateReviewCommentAsync(reviewCommentArgs);
+            var grade = await GeneralModelRepository.Get<Grade>(createStudentComment.GradeId);
+            var assignment = await GeneralModelRepository.Get<Assignments>(grade.AssignmentId);
+            var gradeReview = await GeneralModelRepository.Get<GradeReview>(createStudentComment.GradeReviewId);
+            var student = await GeneralModelRepository.Get<Student>(gradeReview.StudentId);
             //TODO create-notice
             var noticeArgs = new CreateStudentNotificationSingleArgs
             {
                 GradeReviewId = reviewCommentArgs.GradeReviewId,
-                StudentId = reviewComment.GradeReview.StudentId,
-                Message = $"{user.NormalizedDisplayName} comment in your request grade review for assignment {reviewComment.GradeReview.Grade.Assignment.Name}",
+                StudentId = student.Id,
+                Message = $"{user.NormalizedDisplayName} comment in your request grade review for assignment {assignment.Name}",
                 CurrentUser = createStudentComment.CurrentUser
             };
             await _notitficationService.CreateStudentNotification(noticeArgs);
@@ -279,7 +311,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        [HttpPost]
+        [HttpPut]
         [Route("teacher-comment/update")]
         public async Task<IActionResult> UpdateTeacherCommentAsync([FromBody] UpdateCommentRequest updateCommentRequest)
         {
@@ -307,7 +339,7 @@ namespace ManageCourseAPI.Controllers
             }
             var reviewCommentArgs = new UpdateReviewCommentArgs
             {
-                ReviewCommentId = updateCommentRequest.GradeReviewId,
+                ReviewCommentId = reviewCommentExist.Id,
                 Message = updateCommentRequest.Message,
                 CurrentUser = updateCommentRequest.CurrentUser
             };
@@ -384,12 +416,13 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
             var reviewComment = await _gradeReviewService.CreateReviewCommentAsync(reviewCommentArgs);
-            //TODO create-notice
+            var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId);
+            var assignment = await GeneralModelRepository.Get<Assignments>(grade.AssignmentId);
             var noticeArgs = new CreateRequestGradeReviewNotificationArgs
             {
                 GradeReviewId = reviewCommentArgs.GradeReviewId,
-                StudentId = reviewComment.GradeReview.StudentId,
-                Message = $"{student.FullName} comment in request grade review for assignment {reviewComment.GradeReview.Grade.Assignment.Name}",
+                StudentId = student.Id,
+                Message = $"{student.FullName} comment in request grade review for assignment {assignment.Name}",
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
             await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
@@ -414,7 +447,7 @@ namespace ManageCourseAPI.Controllers
                     Status = ApiResponseStatus.Error,
                     Result = ResponseResult.Error,
                     Content = "",
-                    Message = "Create new grade review failed!!"
+                    Message = "Create new comment failed!!"
                 });
             }
             var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.StudentID == user.StudentID).FirstOrDefault();

@@ -15,7 +15,6 @@ namespace ManageCourseAPI.Model.Queries
         public override List<string> GetIncludeNavigationPaths()
         {
             var includes = base.GetIncludeNavigationPaths();
-            includes.Add(nameof(Student));
             return includes;
         }
 

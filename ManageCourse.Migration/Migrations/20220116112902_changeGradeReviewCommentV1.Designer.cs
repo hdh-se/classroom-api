@@ -4,14 +4,16 @@ using ManageCourse.Core.DbContexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ManageCourse.Migrations.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220116112902_changeGradeReviewCommentV1")]
+    partial class changeGradeReviewCommentV1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -339,45 +341,6 @@ namespace ManageCourse.Migrations.Migrations
                     b.ToTable("GradeReview");
                 });
 
-            modelBuilder.Entity("ManageCourse.Core.Data.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("CreateBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreateOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsSeen")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SenderName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TypeNotification")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdateBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("UpdateOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Notification");
-                });
-
             modelBuilder.Entity("ManageCourse.Core.Data.ReviewComment", b =>
                 {
                     b.Property<int>("Id")
@@ -464,6 +427,50 @@ namespace ManageCourse.Migrations.Migrations
                     b.ToTable("Student");
                 });
 
+            modelBuilder.Entity("ManageCourse.Core.Data.StudentNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("CreateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreateOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSeen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TypeNotification")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentNotification");
+                });
+
             modelBuilder.Entity("ManageCourse.Core.Data.Subject", b =>
                 {
                     b.Property<int>("Id")
@@ -502,24 +509,44 @@ namespace ManageCourse.Migrations.Migrations
                     b.ToTable("Subject");
                 });
 
-            modelBuilder.Entity("ManageCourse.Core.Data.StudentNotification", b =>
-                {
-                    b.HasBaseType("ManageCourse.Core.Data.Notification");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("StudentNotification");
-                });
-
             modelBuilder.Entity("ManageCourse.Core.Data.TeacherNotification", b =>
                 {
-                    b.HasBaseType("ManageCourse.Core.Data.Notification");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("CreateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreateOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsSeen")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TeacherId")
                         .HasColumnType("int");
+
+                    b.Property<int>("TypeNotification")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdateBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdateOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.ToTable("TeacherNotification");
                 });
@@ -633,25 +660,8 @@ namespace ManageCourse.Migrations.Migrations
                     b.Navigation("GradeReview");
                 });
 
-            modelBuilder.Entity("ManageCourse.Core.Data.Subject", b =>
-                {
-                    b.HasOne("ManageCourse.Core.Data.Department", "Department")
-                        .WithMany("Subjects")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Department");
-                });
-
             modelBuilder.Entity("ManageCourse.Core.Data.StudentNotification", b =>
                 {
-                    b.HasOne("ManageCourse.Core.Data.Notification", null)
-                        .WithOne()
-                        .HasForeignKey("ManageCourse.Core.Data.StudentNotification", "Id")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired();
-
                     b.HasOne("ManageCourse.Core.Data.Student", "Student")
                         .WithMany("StudentNotification")
                         .HasForeignKey("StudentId")
@@ -661,13 +671,15 @@ namespace ManageCourse.Migrations.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("ManageCourse.Core.Data.TeacherNotification", b =>
+            modelBuilder.Entity("ManageCourse.Core.Data.Subject", b =>
                 {
-                    b.HasOne("ManageCourse.Core.Data.Notification", null)
-                        .WithOne()
-                        .HasForeignKey("ManageCourse.Core.Data.TeacherNotification", "Id")
-                        .OnDelete(DeleteBehavior.ClientCascade)
+                    b.HasOne("ManageCourse.Core.Data.Department", "Department")
+                        .WithMany("Subjects")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Department");
                 });
 
             modelBuilder.Entity("ManageCourse.Core.Data.Assignments", b =>

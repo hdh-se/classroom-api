@@ -17,7 +17,7 @@ namespace ManageCourseAPI.Model.Response
             StudentId = gradeReview.Id;
             MSSV = gradeReview.Student.StudentID;
             GradeId = gradeReview.Id;
-            Student = gradeReview.Student;
+            Student = new StudentResponse(gradeReview.Student);
             Status = gradeReview.Status;
         }
 
@@ -27,7 +27,7 @@ namespace ManageCourseAPI.Model.Response
         public int StudentId { get; set; }
         public string MSSV { get; set; }
         public int GradeId { get; set; }
-        public Student Student { get; set; }
+        public StudentResponse Student { get; set; }
         public GradeReviewStatus Status { get; set; }
     }
 }
