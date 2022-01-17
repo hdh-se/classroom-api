@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace ManageCourse.Core.Model.Args
 {
-    public class CreateStudentNotificationsArgs
+    public class CreateStudentOfCourseNotificationsArgs
     {
         public string Message { get; set; }
-        public List<int> StudentIds { get; set; }
+        public int CourseId { get; set; }
         public string CurrentUser { get; set; }
     }
 }

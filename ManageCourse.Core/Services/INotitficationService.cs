@@ -16,5 +16,6 @@ namespace ManageCourse.Core.Services
         public Task<ICollection<StudentNotification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs);
         public Task<StudentNotification> CreateFinalDecisionGradeReviewNotification(CreateFinalDecisionGradeReviewNotificationArgs notificationArgs);
         public Task<ICollection<TeacherNotification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs);
+        public Task<ICollection<StudentNotification>> CreateStudentOfCourseNotifications(CreateStudentOfCourseNotificationsArgs notificationArgs);
     }
 }

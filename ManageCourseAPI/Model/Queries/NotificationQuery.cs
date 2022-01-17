@@ -11,6 +11,7 @@ namespace ManageCourseAPI.Model.Queries
 {
     public class NotificationQuery : BaseEFQuery<Notification>
     {
+        public int UserId { get; set; }
         public string CurrentUser { get; set; }
         public override List<Expression<Func<Notification, object>>> GetIncludeExpressions()
         {
@@ -24,12 +25,22 @@ namespace ManageCourseAPI.Model.Queries
 
         public override ExpressionStarter<Notification> GetQueryConditions()
         {
-            return base.GetQueryConditions();
+            var predicate = base.GetQueryConditions();
+
+            if (UserId > 0)
+            {
+                predicate.And(c => c.UserId == UserId);
+            }
+
+            return predicate;
         }
 
         public override Dictionary<string, Expression<Func<Notification, object>>> GetSortColumnMappings()
         {
-            return base.GetSortColumnMappings();
+            return new Dictionary<string, Expression<Func<Notification, object>>>
+            {
+                { nameof(Notification.CreateOn), c => c.CreateOn },
+            };
         }
     }
 }

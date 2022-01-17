@@ -10,8 +10,6 @@ namespace ManageCourse.Core.Data.Configurations
             builder.ToTable("ReviewComment");
             builder.Property("Id").ValueGeneratedOnAdd();
             builder.HasOne(x => x.GradeReview).WithMany(y => y.ReviewComments).HasForeignKey(x => x.GradeReviewId).OnDelete(DeleteBehavior.Restrict);
-            builder.HasOne(x => x.Student).WithMany(y => y.ReviewComments).HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
-
         }
     }
 }

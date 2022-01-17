@@ -11,6 +11,7 @@ namespace ManageCourse.Core.Model.Args
         public string Message { get; set; }
         public int GradeReviewId { get; set; }
         public int StudentId { get; set; }
+        public int UserId { get; set; }
         public string CurrentUser { get; set; }
     }
 }
