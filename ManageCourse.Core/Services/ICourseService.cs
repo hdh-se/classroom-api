@@ -22,7 +22,8 @@ namespace ManageCourse.Core.Services
         public Task<bool> UpdateGradeSpecific(UpdateGradeSpecificArgs updateGrade);
         public Task<bool> UpdateGradeNormal(UpdateGradeNormalArgs updateGrade);
         public ICollection<GradeOfAssignmentResponse> GetAllGradeOfAssignment(int assignmentId);
-        public ICollection<GradeOfCourseResponse> GetAllGradeOfCourse(int courseId)
+        public ICollection<GradeOfCourseResponse> GetAllGradeOfCourse(int courseId);
+        public GradeOfCourseResponse GetAllGradeOfCourseForStudent(int courseId, int studentId)
 ;
     }
 }

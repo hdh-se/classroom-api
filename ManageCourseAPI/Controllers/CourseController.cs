@@ -2,7 +2,6 @@
 using ManageCourse.Core.Constansts;
 using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
-using ManageCourse.Core.Helpers;
 using ManageCourse.Core.Model.Args;
 using ManageCourse.Core.Repositories;
 using ManageCourse.Core.Services;
@@ -291,8 +290,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        //TODO
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/all-grades")]
         public async Task<IActionResult> GetAllGradeAsync(int id, string currentUser)
@@ -322,8 +320,39 @@ namespace ManageCourseAPI.Controllers
             });
         }
         
-        //TODO
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet]
+        [Route("{id}/all-grades/student")]
+        public async Task<IActionResult> GetAllGradeOfStudentAsync(int id, string currentUser)
+        {
+             if (!(await ValidateUserInClassAsync(currentUser, id, Role.Student)))
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Get all grades asssignments failed!!"
+                });
+            }
+            var user = await _appUserManager.FindByNameAsync(currentUser);
+            var student = GeneralModelRepository.GetQueryable<Student>().Where(s => s.StudentID == user.StudentID).FirstOrDefault();
+            var result =  _courseService.GetAllGradeOfCourseForStudent(id, student.Id);
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
+            return Ok(new GeneralResponse<object>
+            {
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
+                Content = new { 
+                    header = listAssignment,
+                    scores = result,
+                    total = 1
+                },
+                Message = "Get assignments sucessfully"
+            });
+        }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/assignments/{assignmentsId}/all-grades")]
         public async Task<IActionResult> GetAllGradeAsync(int id, long assignmentsId, string currentUser)
@@ -351,8 +380,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
         
-        //TODO
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade")]
         public async Task<IActionResult> UpdateGradeAsync(int id, long assignmentsId, [FromForm] UpdateGradeRequest updateGrade)
@@ -386,8 +414,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
         
-        //TODO
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/update-student")]
         public async Task<IActionResult> UpdateMemberAsync(int id, [FromForm] UpdateMemberByFileRequest updateMember)
@@ -495,7 +522,7 @@ namespace ManageCourseAPI.Controllers
             return students;
         }
         
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade-normal")]
         public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeNormalRequest request)
@@ -537,7 +564,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade-finalized")]
         public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeSpecificRequest request)
