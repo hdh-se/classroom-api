@@ -95,7 +95,7 @@ namespace ManageCourseAPI
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddIdentityServerAuthentication(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
-                    options.Authority = ConfigClient.URL_API;
+                    options.Authority = ConfigConstant.URL_API;
                     options.ApiName = "courseapi";
                 });
 
@@ -114,6 +114,7 @@ namespace ManageCourseAPI
             services.AddScoped<AppUserStore>();
             services.TryAddScoped<ICourseService, CourseService>();
             services.TryAddScoped<IUserService, UserService>();
+            services.TryAddScoped<IAdminService, AdminService>();
             services.TryAddScoped<IAppUserStore, AppUserStore>();
             services.TryAddScoped<IGradeReviewService, GradeReviewService>();
             services.TryAddScoped<INotitficationService, NotitficationService>();
