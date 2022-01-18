@@ -56,12 +56,13 @@ namespace ManageCourseAPI.Controllers
                     Message = "Create new grade review failed!!"
                 });
             }
-            var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.StudentID == user.StudentID).FirstOrDefault();
             var gradeReview = GeneralModelRepository.GetQueryable<GradeReview>().Where(g => g.GradeId == gradeReviewQuery.GradeId).FirstOrDefault();
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewQuery.GradeId, includeNavigationPaths: "Assignments");
+            var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.Id == grade.StudentId).FirstOrDefault();
             response.Grade = new GradeResponse(grade);
             response.ExerciseName = grade.Assignments.Name;
+            response.Student = new StudentResponse(student);
 
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
@@ -185,6 +186,9 @@ namespace ManageCourseAPI.Controllers
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId, includeNavigationPaths: "Assignments");
             response.Grade = new GradeResponse(grade);
             response.ExerciseName = grade.Assignments.Name;
+            response.Student = new StudentResponse(student);
+            response.MSSV = student.StudentID;
+
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
                 Status = ApiResponseStatus.Success,
@@ -231,8 +235,12 @@ namespace ManageCourseAPI.Controllers
             //TODO create-notice
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId, includeNavigationPaths: "Assignments");
+            var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.Id == grade.StudentId).FirstOrDefault();
             response.Grade = new GradeResponse(grade);
             response.ExerciseName = grade.Assignments.Name;
+            response.Student = new StudentResponse(student);
+            response.MSSV = student.StudentID;
+
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
                 Status = ApiResponseStatus.Success,
@@ -450,6 +458,7 @@ namespace ManageCourseAPI.Controllers
             await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
             var response = new ReviewCommentResponse(reviewComment);
             response.Student = new StudentResponse(student);
+
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
@@ -496,6 +505,7 @@ namespace ManageCourseAPI.Controllers
             //TODO create-notice
             var response = new ReviewCommentResponse(reviewComment);
             response.Student = new StudentResponse(student);
+
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
