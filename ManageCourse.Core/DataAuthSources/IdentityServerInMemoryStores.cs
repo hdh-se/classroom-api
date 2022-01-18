@@ -50,7 +50,7 @@ namespace ManageCourse.Core.DataAuthSources
                 AllowedScopes = { "courseapi.read" },
                 AlwaysIncludeUserClaimsInIdToken = true,
                 ClientId = "courseclientexternallogin",
-                RedirectUris = {$"{ConfigClient.URL_CLIENT}/login" },
+                RedirectUris = {$"{ConfigConstant.URL_CLIENT}/login" },
                 ClientSecrets = { new Secret("CourseApi".Sha256()) },
                 UpdateAccessTokenClaimsOnRefresh = true,
             }

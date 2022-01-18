@@ -9,18 +9,18 @@ namespace ManageCourse.Core.Helpers
 {
     public class EmailHelper
     {
-        public bool SendConfirmMail (string userEmail, string confirmationLink)
+        public bool SendConfirmMail (string userEmail, string confirmationLink, string subject = "Confirm your email")
         {
             MailMessage mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress("tanhanh2kocean@gmail.com");
+            mailMessage.From = new MailAddress("tanhank2k@gmail.com");
             mailMessage.To.Add(new MailAddress(userEmail));
 
-            mailMessage.Subject = "Confirm your email";
+            mailMessage.Subject = subject;
             mailMessage.IsBodyHtml = true;
             mailMessage.Body = confirmationLink;
 
             SmtpClient smtpClient = new SmtpClient();
-            smtpClient.Credentials = new System.Net.NetworkCredential("tanhanh2kocean@gmail.com", "ypkgs8tqb19APaxn");
+            smtpClient.Credentials = new System.Net.NetworkCredential("tanhank2k@gmail.com", "CQjLOwTzKtXMsExf");
             smtpClient.Host = "smtp-relay.sendinblue.com";
             smtpClient.Port = 587;
 
@@ -29,8 +29,9 @@ namespace ManageCourse.Core.Helpers
                 smtpClient.Send(mailMessage);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine(ex.ToString());
             }
             return false;
         }

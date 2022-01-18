@@ -14,6 +14,7 @@ namespace ManageCourseAPI.Model.Response
         public string FirstName { get; set; }
         public string MiddleName { get; set; }
         public string LastName { get; set; }
+        public RoleAccount Role { get; set; }
         public Gender Gender { get; set; }
         public string Email { get; set; }
         public string ProfileImageUrl { get; set; }
@@ -30,6 +31,7 @@ namespace ManageCourseAPI.Model.Response
             Email = user.Email;
             Gender = user.Gender;
             StudentID = user.StudentID;
+            Role = user.RoleAccount;
             PhoneNumber = user.PhoneNumber;
             FirstName = user.FirstName;
             MiddleName = user.MiddleName;

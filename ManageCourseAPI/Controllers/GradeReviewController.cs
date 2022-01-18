@@ -297,16 +297,20 @@ namespace ManageCourseAPI.Controllers
             var noticeArgs = new CreateStudentNotificationSingleArgs
             {
                 GradeReviewId = reviewCommentArgs.GradeReviewId,
+                CourseId = createStudentComment.CourseId,
+                GradeId = grade.Id,
                 StudentId = student.Id,
                 Message = $"{user.NormalizedDisplayName} comment in your request grade review for assignment {assignment.Name}",
                 CurrentUser = createStudentComment.CurrentUser
             };
             await _notitficationService.CreateStudentNotification(noticeArgs);
+            var response = new ReviewCommentResponse(reviewComment);
+            response.Teacher = new UserResponse(user);
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new ReviewCommentResponse(reviewComment),
+                Content = response,
                 Message = "Create new comment review sucessfull"
             });
         }
@@ -422,15 +426,19 @@ namespace ManageCourseAPI.Controllers
             {
                 GradeReviewId = reviewCommentArgs.GradeReviewId,
                 StudentId = student.Id,
+                CourseId = gradeReviewRequest.CourseId,
+                GradeId = grade.Id,
                 Message = $"{student.FullName} comment in request grade review for assignment {assignment.Name}",
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
             await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            var response = new ReviewCommentResponse(reviewComment);
+            response.Student = new StudentResponse(student);
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new ReviewCommentResponse(reviewComment),
+                Content = response,
                 Message = "Create new comment review sucessfull"
             });
         }

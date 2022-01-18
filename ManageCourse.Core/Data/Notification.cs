@@ -12,6 +12,9 @@ namespace ManageCourse.Core.Data
     {
         public int Id { get; set; }
         public int UserId { get; set; }
+        public int CourseId { get; set; }
+        public int GradeId { get; set; }
+        public int GradeReviewId { get; set; }
         public bool IsSeen { get; set; }
         public string SenderName { get; set; }
         public TypeNotification TypeNotification { get; set; }

@@ -37,6 +37,9 @@ namespace ManageCourse.Core.Services.Implementation
             {
                 Message = notificationArgs.Message,
                 UserId = notificationArgs.UserId,
+                CourseId = notificationArgs.CourseId,
+                GradeId = notificationArgs.GradeId,
+                GradeReviewId = notificationArgs.GradeReviewId,
                 IsSeen = false,
                 SenderName = notificationArgs.CurrentUser,
                 TypeNotification = TypeNotification.ForStudent
@@ -61,6 +64,9 @@ namespace ManageCourse.Core.Services.Implementation
                 var notification = new Notification
                 {
                     Message = createGradeFinallizeNotificationArgs.Message,
+                    CourseId = createGradeFinallizeNotificationArgs.CourseId,
+                    GradeId = createGradeFinallizeNotificationArgs.GradeId,
+                    GradeReviewId = createGradeFinallizeNotificationArgs.GradeReviewId,
                     UserId = userId
                 };
                 AuditHelper.CreateAudit(notification, createGradeFinallizeNotificationArgs.CurrentUser);
@@ -86,6 +92,9 @@ namespace ManageCourse.Core.Services.Implementation
             {
                 Message = studentNotificationSingleArgs.Message,
                 UserId = userId,
+                CourseId = studentNotificationSingleArgs.CourseId,
+                GradeId = studentNotificationSingleArgs.GradeId,
+                GradeReviewId = studentNotificationSingleArgs.GradeReviewId,
                 IsSeen = false,
                 SenderName = studentNotificationSingleArgs.CurrentUser,
                 TypeNotification = TypeNotification.ForStudent
@@ -119,6 +128,9 @@ namespace ManageCourse.Core.Services.Implementation
                 {
                     Message = notificationArgs.Message,
                     UserId = teacherId,
+                    CourseId = course.Id,
+                    GradeId = grade.Id,
+                    GradeReviewId = gradeReview.Id,                    
                     SenderName = student.FullName,
                     IsSeen = false,
                     TypeNotification = TypeNotification.ForTeacher
@@ -144,6 +156,9 @@ namespace ManageCourse.Core.Services.Implementation
                 var notification = new Notification
                 {
                     Message = studentNotificationSingleArgs.Message,
+                    CourseId = studentNotificationSingleArgs.CourseId,
+                    GradeId = studentNotificationSingleArgs.GradeId,
+                    GradeReviewId = studentNotificationSingleArgs.GradeReviewId,
                     UserId = userId
                 };
                 AuditHelper.CreateAudit(notification, studentNotificationSingleArgs.CurrentUser);
@@ -166,6 +181,9 @@ namespace ManageCourse.Core.Services.Implementation
                 var notification = new Notification
                 {
                     Message = notificationArgs.Message,
+                    CourseId = notificationArgs.CourseId,
+                    GradeId = notificationArgs.GradeId,
+                    GradeReviewId = notificationArgs.GradeReviewId,
                     UserId = userId
                 };
                 AuditHelper.CreateAudit(notification, notificationArgs.CurrentUser);

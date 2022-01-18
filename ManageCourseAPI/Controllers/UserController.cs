@@ -34,13 +34,15 @@ namespace ManageCourseAPI.Controllers
     {
         public UserController(
             IUserService userService, 
+            IEmailService emailService, 
             AppUserManager appUserManager, 
-            SignInManager<AppUser> signInManager, 
+            SignInManager<AppUser> signInManager,
             IIdentityServerInteractionService interactionService,
             AuthDbContext authDbContext
             )
         {
             UserService = userService;
+            EmailService = emailService;
             AppUserManager = appUserManager;
             SignInManager = signInManager;
             InteractionService = interactionService;
@@ -49,6 +51,7 @@ namespace ManageCourseAPI.Controllers
         }
 
         protected IUserService UserService { get; private set; }
+        protected IEmailService EmailService { get; private set; }
         protected AppUserManager AppUserManager { get; private set; }
         protected SignInManager<AppUser> SignInManager { get; private set; }
         protected IIdentityServerInteractionService InteractionService { get; private set; }
@@ -188,6 +191,55 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [HttpPost, Route("reset-password")]
+        public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordRequest resetPasswordRequest)
+        {
+            var user = await AppUserManager.FindByNameAsync(resetPasswordRequest.Username);
+            if (user==null)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "User not found"
+                });
+            }
+            if (user.Email != resetPasswordRequest.Email)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Email incorrect !!!"
+                });
+            }
+
+            var token = HttpUtility.UrlEncode(await AppUserManager.GeneratePasswordResetTokenAsync(user));
+            var confirmationLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/Email/reset-password?token={token}&email={user.Email}";
+            EmailHelper emailHelper = new EmailHelper();
+            bool emailResponse = emailHelper.SendConfirmMail(user.Email, confirmationLink);
+            //EmailService.Send(user.Email, "Reset Password", confirmationLink);
+            if (emailResponse)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Success,
+                    Result = ResponseResult.Successfull,
+                    Content = "",
+                    Message = "Mail reset password have send !!!"
+                }); 
+            }
+            return Ok(new GeneralResponse<string>
+            {
+                Status = ApiResponseStatus.Error,
+                Result = ResponseResult.Error,
+                Content = "",
+                Message = "Mail reset password send failed"
+            });
+        }
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet, Route("profile")]
         public async Task<IActionResult> GetProfileAsync (string username)
@@ -249,7 +301,7 @@ namespace ManageCourseAPI.Controllers
                 var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
                 var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync("courseapi.read");
 
-                return Redirect($"{ConfigClient.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={userExist.Email}&username={userExist.UserName}&fullname={userExist.NormalizedDisplayName}"); 
+                return Redirect($"{ConfigConstant.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={userExist.Email}&username={userExist.UserName}&fullname={userExist.NormalizedDisplayName}"); 
             }
             string email = info.Principal.FindFirstValue(ClaimTypes.Email);
             string FirstName = info.Principal.FindFirstValue(ClaimTypes.GivenName) ?? info.Principal.FindFirstValue(ClaimTypes.Name);
@@ -271,10 +323,10 @@ namespace ManageCourseAPI.Controllers
                 var claimsPrincipal = await SignInManager.CreateUserPrincipalAsync(user);
                 var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
                 var tokenResponse = await tokenClient.RequestClientCredentialsTokenAsync("courseapi.read");
-                return Redirect($"{ConfigClient.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={user.Email}&username={user.UserName}&fullname={user.NormalizedDisplayName}"); 
+                return Redirect($"{ConfigConstant.URL_CLIENT}/login?token={tokenResponse.AccessToken}&email={user.Email}&username={user.UserName}&fullname={user.NormalizedDisplayName}"); 
             }
 
-            return Redirect($"{ConfigClient.URL_CLIENT}/login");
+            return Redirect($"{ConfigConstant.URL_CLIENT}/login");
         }
 
         [HttpGet, Route("student-code")]

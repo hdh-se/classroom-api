@@ -38,5 +38,17 @@ namespace ManageCourseAPI.Controllers
             }
             return Ok(result.Succeeded ? "ConfirmEmail" : "Error");
         }
+        
+        [HttpGet]
+        [Route("reset-password")]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            var user = await appUserManager.FindByEmailAsync(email);
+            if (user == null)
+                return Ok("Not found user");
+
+            var result = await appUserManager.ResetPasswordAsync(user, token, ConfigConstant.PASSWORD_DEFAULT);
+            return Ok(result.Succeeded ? "Reset Password Successfully" : "Error");
+        }
     }
 }
