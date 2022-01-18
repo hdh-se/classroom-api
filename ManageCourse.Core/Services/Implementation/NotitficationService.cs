@@ -52,7 +52,7 @@ namespace ManageCourse.Core.Services.Implementation
         public async Task<ICollection<StudentNotification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs)
         {
             var grade = await _generalModelRepository.Get<Grade>(createGradeFinallizeNotificationArgs.GradeId);
-            var course = await _appDbContext.Courses.Where(x => x.Id == grade.Assignment.CourseId).FirstOrDefaultAsync();
+            var course = await _appDbContext.Courses.Where(x => x.Id == grade.Assignments.CourseId).FirstOrDefaultAsync();
             var students = await _appDbContext.Course_Students.Where(x => x.CourseId == course.Id).Select(x => new { StudentId = x.StudentId, StudentCode = x.StudentCode }).ToListAsync();
             var studentCodes = students.Select(x => x.StudentCode).ToList();
             var userIds = await _generalModelRepository.GetQueryable<AppUser>().Where(x => studentCodes.Contains(x.StudentID)).Select(x => x.Id).ToListAsync();
