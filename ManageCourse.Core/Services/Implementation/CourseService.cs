@@ -240,14 +240,23 @@ namespace ManageCourse.Core.Services.Implementation
                 Id = s.Id,
                 Mssv = s.StudentID,
                 Name = s.FullName,
-                Grades = _appDbContext.Grades.Join(_appDbContext.Assignments, 
-                Grade => Grade.AssignmentId, 
-                Assignments => Assignments.Id, 
+                Grades = _appDbContext.Grades.Join(_appDbContext.Assignments,
+                Grade => Grade.AssignmentId,
+                Assignments => Assignments.Id,
                 (Grade, Assignments) => new {
                     Grade = Grade,
-                    Assignment = Assignments}).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId)
+                    Assignment = Assignments }).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId)
                     .Select(d => new GradeSimpleResponse(d.Grade, d.Assignment)).ToList()
             }).ToList();
+            var gradeReviews = _appDbContext.GradeReviews.Where(s => courseStudent.Contains(s.StudentId)).ToList();
+            foreach (var student in result)
+            {
+                foreach (var grade in student.Grades)
+                {
+                    var gradeReview = gradeReviews.Where(g => g.StudentId == student.Id && g.GradeId == grade.GradeId).FirstOrDefault();
+                    grade.GradeReviewId = gradeReview != null ? gradeReview.Id: 0;
+                }
+            }
             return result;
         }
 
@@ -299,6 +308,31 @@ namespace ManageCourse.Core.Services.Implementation
 
             await _appDbContext.SaveChangesAsync();
             return true;
+        }
+
+        public GradeOfCourseResponse GetAllGradeOfCourseForStudent(int courseId, int studentId)
+        {
+            var result = _appDbContext.Students.Where(s => s.Id == studentId).Select(s => new GradeOfCourseResponse
+            {
+                Id = s.Id,
+                Mssv = s.StudentID,
+                Name = s.FullName,
+                Grades = _appDbContext.Grades.Join(_appDbContext.Assignments,
+                Grade => Grade.AssignmentId,
+                Assignments => Assignments.Id,
+                (Grade, Assignments) => new {
+                    Grade = Grade,
+                    Assignment = Assignments
+                }).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId)
+                    .Select(d => new GradeSimpleResponse(d.Grade, d.Assignment)).ToList()
+            }).FirstOrDefault();
+            var gradeReviews = _appDbContext.GradeReviews.Where(s => result.Id == s.StudentId).ToList();
+            foreach (var grade in result.Grades)
+            {
+                var gradeReview = gradeReviews.Where(g => g.StudentId == result.Id && g.GradeId == grade.GradeId).FirstOrDefault();
+                grade.GradeReviewId = gradeReview != null ? gradeReview.Id : 0;
+            }
+            return result;
         }
     }
 }

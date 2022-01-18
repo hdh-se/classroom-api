@@ -19,6 +19,7 @@ namespace ManageCourse.Core.Model.Responses
 
         public int Id { get; set; }
         public int GradeId { get; set; }
+        public int GradeReviewId { get; set; }
         public float Grade { get; set; }
         public int MaxGrade { get; set; }
     }
