@@ -15,9 +15,7 @@ namespace ManageCourseAPI.Model.Response
             GradeExpect = gradeReview.GradeExpect;
             Message = gradeReview.Message;
             StudentId = gradeReview.Id;
-            MSSV = gradeReview.Student.StudentID;
             GradeId = gradeReview.Id;
-            Student = new StudentResponse(gradeReview.Student);
             Status = gradeReview.Status;
         }
 
