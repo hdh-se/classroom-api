@@ -1,6 +1,7 @@
 ﻿using ManageCourse.Core.Constansts;
 using ManageCourse.Core.Data;
 using ManageCourse.Core.DataAuthSources;
+using ManageCourse.Core.DbContexts;
 using ManageCourse.Core.Model.Args;
 using ManageCourse.Core.Repositories;
 using ManageCourse.Core.Services;
@@ -57,11 +58,16 @@ namespace ManageCourseAPI.Controllers
             }
             var student = GeneralModelRepository.GetQueryable<Student>().Where(c => c.StudentID == user.StudentID).FirstOrDefault();
             var gradeReview = GeneralModelRepository.GetQueryable<GradeReview>().Where(g => g.GradeId == gradeReviewQuery.GradeId).FirstOrDefault();
+            var response = new GradeReviewResponse(gradeReview);
+            var grade = await GeneralModelRepository.Get<Grade>(gradeReviewQuery.GradeId, includeNavigationPaths: "Assignments");
+            response.Grade = new GradeResponse(grade);
+            response.ExerciseName = grade.Assignments.Name;
+
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new GradeReviewResponse(gradeReview),
+                Content = response,
                 Message = "Create new comment review sucessfull"
             });
         }
@@ -171,15 +177,19 @@ namespace ManageCourseAPI.Controllers
             {
                 CurrentUser = gradeReviewRequest.CurrentUser,
                 GradeReviewId = gradeReview.Id,
-                Message = $"{gradeReview.Student?.FullName} create new grade review for {gradeReview?.Grade?.Assignment?.Name}",
+                Message = $"{gradeReview.Student?.FullName} create new grade review for {gradeReview?.Grade?.Assignments?.Name}",
                 StudentId = gradeReview.Student != null ? gradeReview.Student.Id : 0
             };
             await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            var response = new GradeReviewResponse(gradeReview);
+            var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId, includeNavigationPaths: "Assignments");
+            response.Grade = new GradeResponse(grade);
+            response.ExerciseName = grade.Assignments.Name;
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new GradeReviewResponse(gradeReview),
+                Content = response,
                 Message = "Create new grade review successfull"
             });
         }
@@ -219,11 +229,15 @@ namespace ManageCourseAPI.Controllers
             };
             var gradeReview = await _gradeReviewService.UpdateGradeReviewAsync(gradeReviewArgs);
             //TODO create-notice
+            var response = new GradeReviewResponse(gradeReview);
+            var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId, includeNavigationPaths: "Assignments");
+            response.Grade = new GradeResponse(grade);
+            response.ExerciseName = grade.Assignments.Name;
             return Ok(new GeneralResponse<GradeReviewResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new GradeReviewResponse(gradeReview),
+                Content = response,
                 Message = "Update grade review successfull"
             });
         }
@@ -348,12 +362,14 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = updateCommentRequest.CurrentUser
             };
             var reviewComment = await _gradeReviewService.UpdateReviewCommentAsync(reviewCommentArgs);
+            var response = new ReviewCommentResponse(reviewComment);
+            response.Teacher = new UserResponse(user);
             //TODO create-notice
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new ReviewCommentResponse(reviewComment),
+                Content = response,
                 Message = "Create new comment review sucessfull"
             });
         }
@@ -478,11 +494,13 @@ namespace ManageCourseAPI.Controllers
             };
             var reviewComment = await _gradeReviewService.UpdateReviewCommentAsync(reviewCommentArgs);
             //TODO create-notice
+            var response = new ReviewCommentResponse(reviewComment);
+            response.Student = new StudentResponse(student);
             return Ok(new GeneralResponse<ReviewCommentResponse>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new ReviewCommentResponse(reviewComment),
+                Content = response,
                 Message = "Create new comment review sucessfull"
             });
         }
@@ -548,7 +566,7 @@ namespace ManageCourseAPI.Controllers
                 result = courseUser.Role == role;
             }
 
-            var grade = GeneralModelRepository.GetQueryable<Grade>().Where(c => c.Id == gradeId && c.Assignment.CourseId == courseId).FirstOrDefault();
+            var grade = GeneralModelRepository.GetQueryable<Grade>().Where(c => c.Id == gradeId && c.Assignments.CourseId == courseId).FirstOrDefault();
             if (grade != null)
             {
                 return grade.MSSV == user.StudentID;
@@ -607,7 +625,7 @@ namespace ManageCourseAPI.Controllers
                         {
                             return false;
                         }
-                        var grade = GeneralModelRepository.GetQueryable<Grade>().Where(c => c.Id == gradeId && c.Assignment.CourseId == courseId).FirstOrDefault();
+                        var grade = GeneralModelRepository.GetQueryable<Grade>().Where(c => c.Id == gradeId && c.Assignments.CourseId == courseId).FirstOrDefault();
                         if (grade != null)
                         {
                             return grade.MSSV == user.StudentID;

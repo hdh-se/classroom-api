@@ -13,7 +13,7 @@ namespace ManageCourse.Core.Services
     {
         public Task<AppUser> Register(RegisterNewUserData data);
         public Task<AppUser> UpdateStudentIDAsync(UpdateStudentIDArgs args);
-        public Task<AppUser> ManagerAccountAsync(ApprovalAccountArgs args)
+        public Task<AppUser> ManagerAccountAsync(ApprovalAccountArgs args);
 
     }
 }

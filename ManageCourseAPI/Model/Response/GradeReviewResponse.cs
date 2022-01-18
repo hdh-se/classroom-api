@@ -26,7 +26,9 @@ namespace ManageCourseAPI.Model.Response
         public string Message { get; set; }
         public int StudentId { get; set; }
         public string MSSV { get; set; }
+        public string ExerciseName { get; set; }
         public int GradeId { get; set; }
+        public GradeResponse Grade { get; set; }
         public StudentResponse Student { get; set; }
         public GradeReviewStatus Status { get; set; }
     }
