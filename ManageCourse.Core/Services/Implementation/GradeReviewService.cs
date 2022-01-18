@@ -85,6 +85,9 @@ namespace ManageCourse.Core.Services.Implementation
             var gradeReview = await _generalModelRepository.Get<GradeReview>(approvalGradeReviewArgs.GradeReviewId);
             AuditHelper.UpdateAudit(gradeReview, approvalGradeReviewArgs.CurrentUser);
             gradeReview.Status = approvalGradeReviewArgs.ApprovalStatus;
+            var grade = await _generalModelRepository.Get<Grade>(gradeReview.GradeId);
+            grade.GradeAssignment = gradeReview.GradeExpect;
+            await _generalModelRepository.Update(grade);
             await _generalModelRepository.Update(gradeReview);
         }
     }
