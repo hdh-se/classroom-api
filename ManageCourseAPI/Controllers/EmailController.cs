@@ -11,12 +11,12 @@ namespace ManageCourseAPI.Controllers
 {
 
     [Route("Email")]
-    public class EmailController: ControllerBase
+    public class EmailController : ControllerBase
     {
         private AppUserManager appUserManager;
         private IGeneralModelRepository generalModelRepository;
 
-        public EmailController(AppUserManager appUserManager, IGeneralModelRepository repository )
+        public EmailController(AppUserManager appUserManager, IGeneralModelRepository repository)
         {
             this.appUserManager = appUserManager;
             this.generalModelRepository = repository;
@@ -33,12 +33,12 @@ namespace ManageCourseAPI.Controllers
             if (result.Succeeded)
             {
                 user.UserStatus = UserStatus.Active;
-                await  generalModelRepository.Update(user);
-                
+                await generalModelRepository.Update(user);
+
             }
             return Ok(result.Succeeded ? "ConfirmEmail" : "Error");
         }
-        
+
         [HttpGet]
         [Route("reset-password")]
         public async Task<IActionResult> ResetPassword(string token, string email)
@@ -48,7 +48,8 @@ namespace ManageCourseAPI.Controllers
                 return Ok("Not found user");
 
             var result = await appUserManager.ResetPasswordAsync(user, token, ConfigConstant.PASSWORD_DEFAULT);
-            return Ok(result.Succeeded ? "Reset Password Successfully" : "Error");
+            return Ok(result.Succeeded ?
+                ConfigConstant.PASSWORD_DEFAULT : "Error");
         }
     }
 }

@@ -26,6 +26,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
+using Microsoft.Identity.Web;
 
 namespace ManageCourseAPI.Controllers
 {
@@ -194,7 +195,7 @@ namespace ManageCourseAPI.Controllers
         [HttpPost, Route("reset-password")]
         public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordRequest resetPasswordRequest)
         {
-            var user = await AppUserManager.FindByNameAsync(resetPasswordRequest.Username);
+            var user = await AppUserManager.FindByEmailAsync(resetPasswordRequest.Email);
             if (user==null)
             {
                 return Ok(new GeneralResponse<string>
@@ -205,19 +206,9 @@ namespace ManageCourseAPI.Controllers
                     Message = "User not found"
                 });
             }
-            if (user.Email != resetPasswordRequest.Email)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Error,
-                    Result = ResponseResult.Error,
-                    Content = "",
-                    Message = "Email incorrect !!!"
-                });
-            }
 
             var token = HttpUtility.UrlEncode(await AppUserManager.GeneratePasswordResetTokenAsync(user));
-            var confirmationLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/Email/reset-password?token={token}&email={user.Email}";
+            var confirmationLink = $"{ConfigConstant.URL_CLIENT}/login?reset-password=true&token={token}&email={user.Email}";
             EmailHelper emailHelper = new EmailHelper();
             bool emailResponse = emailHelper.SendConfirmMail(user.Email, confirmationLink);
             //EmailService.Send(user.Email, "Reset Password", confirmationLink);

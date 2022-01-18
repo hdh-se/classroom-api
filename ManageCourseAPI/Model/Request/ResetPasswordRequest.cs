@@ -7,7 +7,6 @@ namespace ManageCourseAPI.Model.Request
 {
     public class ResetPasswordRequest
     {
-        public string Username { get; set; }
         public string Email { get; set; }
 
     }
