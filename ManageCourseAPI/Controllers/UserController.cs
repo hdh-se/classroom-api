@@ -120,6 +120,7 @@ namespace ManageCourseAPI.Controllers
                     Email = user.Email,
                     Username = user.UserName,
                     Token = tokenResponse.AccessToken , 
+                    Id = user.Id,
                     RefreshToken=""},
                 Message = "Login successfull"
             });

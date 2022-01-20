@@ -13,6 +13,7 @@ namespace ManageCourseAPI
     {
         public static void Main(string[] args)
         {
+
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -21,6 +22,7 @@ namespace ManageCourseAPI
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+
                 });
     }
 }

@@ -14,8 +14,8 @@ namespace ManageCourse.Core.Helpers
     {
         private readonly string SmtpHost = "smtp.gmail.com";
         private readonly int SmtpPort = 587;
-        private readonly string SmtpUser = "TRƯỜNG_SA_HOÀNG_SA_LÀ_CỦA_VIỆT_NAM_NHÉ@gmail.com";
-        private readonly string SmtpPass = "CŨNG_LÀ__TRƯỜNG_SA_HOÀNG_SA_LÀ_CỦA_VIỆT_NAM_NHÉ_NHƯNG_MÀ_LÀ_PASSWORD";
+        private readonly string SmtpUser = "ledungpython@gmail.com";
+        private readonly string SmtpPass = "Mystrongpassword00@";
 
         public EmailService()
         {

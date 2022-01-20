@@ -28,20 +28,33 @@ using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using ExcelDataReader.Log;
 using static ManageCourse.Core.DataAuthSources.AppUserStore;
 using ManageCourse.Core.Constansts;
+using ManageCourseAPI.WebSocket;
+using Microsoft.Extensions.Hosting.Internal;
 
 namespace ManageCourseAPI
 {
     public class Startup
     {
+        private WebSocket.WebSocket socket;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            // socket = new WebSocket.WebSocket();
+            // socket.Run();
         }
 
         public IConfiguration Configuration { get; }
+
+        private void OnStopped()
+        {
+            socket.Stop();
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -58,30 +71,31 @@ namespace ManageCourseAPI
             var connectionStringUserAuth = Configuration.GetConnectionString("User");
             services.AddDbContext<AuthDbContext>(options =>
             {
-                options.UseSqlServer(connectionStringUserAuth, b => b.MigrationsAssembly("ManageCourse.Migrations"));
+                options.UseSqlServer(connectionStringUserAuth,
+                    b => b.MigrationsAssembly("ManageCourse.Migrations"));
             });
 
             services.AddIdentity<AppUser, IdentityRole<int>>(options =>
-            {
-                options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireLowercase = true;
-                options.User.RequireUniqueEmail = true;
-                options.SignIn.RequireConfirmedEmail = true;
-            }).AddEntityFrameworkStores<AuthDbContext>()
+                {
+                    options.Password.RequireDigit = true;
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireLowercase = true;
+                    options.User.RequireUniqueEmail = true;
+                    options.SignIn.RequireConfirmedEmail = true;
+                }).AddEntityFrameworkStores<AuthDbContext>()
                 .AddSignInManager<AppSignInManager>()
                 .AddUserManager<AppUserManager>()
                 .AddUserStore<AppUserStore>()
                 .AddDefaultTokenProviders();
 
             var builder = services.AddIdentityServer(options =>
-            {
-                options.Events.RaiseErrorEvents = true;
-                options.Events.RaiseInformationEvents = true;
-                options.Events.RaiseFailureEvents = true;
-                options.Events.RaiseSuccessEvents = true;
-            })
+                {
+                    options.Events.RaiseErrorEvents = true;
+                    options.Events.RaiseInformationEvents = true;
+                    options.Events.RaiseFailureEvents = true;
+                    options.Events.RaiseSuccessEvents = true;
+                })
                 .AddInMemoryApiResources(IdentityServerInMemoryStores.ApiResources)
                 .AddInMemoryApiScopes(IdentityServerInMemoryStores.ApiScopes)
                 .AddInMemoryClients(IdentityServerInMemoryStores.Clients)
@@ -111,6 +125,8 @@ namespace ManageCourseAPI
             });
             services.AddScoped<AppUserManager>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddSingleton<IWebSocket, WebSocket.WebSocket>();
+
             services.AddScoped<AppUserStore>();
             services.TryAddScoped<ICourseService, CourseService>();
             services.TryAddScoped<IUserService, UserService>();
@@ -121,10 +137,9 @@ namespace ManageCourseAPI
             services.TryAddScoped<DbContextContainer>();
             services.TryAddScoped<IGeneralModelRepository, GeneralModelRepository>();
             services.AddControllers();
-
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ManageCourseAPI", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo {Title = "ManageCourseAPI", Version = "v1"});
                 var jwtSecurityScheme = new OpenApiSecurityScheme
                 {
                     Scheme = "bearer",
@@ -143,7 +158,7 @@ namespace ManageCourseAPI
 
                 c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
 
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtSecurityScheme, Array.Empty<string>() } });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {{jwtSecurityScheme, Array.Empty<string>()}});
             });
             services.AddCors(options =>
             {
@@ -151,14 +166,15 @@ namespace ManageCourseAPI
                     builder =>
                     {
                         builder.AllowAnyOrigin()
-                                .AllowAnyMethod()
-                                .AllowAnyHeader();
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
                     });
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
+            IHostApplicationLifetime applicationLifetime)
         {
             if (env.IsDevelopment())
             {
@@ -173,10 +189,14 @@ namespace ManageCourseAPI
             app.UseAuthorization();
             app.UseIdentityServer();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
+
+       
+            applicationLifetime.ApplicationStarted.Register(()=> 
+                app.ApplicationServices.GetService<IWebSocket>()?.Run());
+            applicationLifetime.ApplicationStopped.Register(() =>
+                app.ApplicationServices.GetService<IWebSocket>()?.Stop());
         }
+
     }
 }

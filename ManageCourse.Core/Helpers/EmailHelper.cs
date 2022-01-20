@@ -4,36 +4,53 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Threading.Tasks;
+using MailKit.Security;
+using MimeKit;
+using MimeKit.Text;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
+using MimeKit.Text;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace ManageCourse.Core.Helpers
 {
     public class EmailHelper
+
+
     {
-        public bool SendConfirmMail (string userEmail, string confirmationLink, string subject = "Confirm your email")
+        private readonly string SmtpHost = "smtp.gmail.com";
+        private readonly int SmtpPort = 587;
+        private readonly string SmtpUser = "ledungpython@gmail.com";
+        private readonly string SmtpPass = "Mystrongpassword00@";
+
+        public bool SendConfirmMail(string userEmail, string confirmationLink, string subject = "Confirm your email")
         {
-            MailMessage mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress("tanhank2k@gmail.com");
-            mailMessage.To.Add(new MailAddress(userEmail));
-
-            mailMessage.Subject = subject;
-            mailMessage.IsBodyHtml = true;
-            mailMessage.Body = confirmationLink;
-
-            SmtpClient smtpClient = new SmtpClient();
-            smtpClient.Credentials = new System.Net.NetworkCredential("tanhank2k@gmail.com", "CQjLOwTzKtXMsExf");
-            smtpClient.Host = "smtp-relay.sendinblue.com";
-            smtpClient.Port = 587;
-
             try
             {
-                smtpClient.Send(mailMessage);
+                // create message
+                var email = new MimeMessage();
+                email.From.Add(MailboxAddress.Parse(SmtpUser));
+                email.To.Add(MailboxAddress.Parse(userEmail));
+                email.Subject = subject;
+                email.Body = new TextPart(TextFormat.Html) {Text = confirmationLink};
+
+                // send email
+                using var smtp = new SmtpClient();
+                smtp.Connect(SmtpHost, SmtpPort, SecureSocketOptions.StartTls);
+                smtp.Authenticate(SmtpUser, SmtpPass);
+                smtp.Send(email);
+                smtp.Disconnect(true);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex.ToString());
+                return false;
             }
-            return false;
         }
     }
 }
