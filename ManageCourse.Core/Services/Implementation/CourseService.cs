@@ -307,7 +307,7 @@ namespace ManageCourse.Core.Services.Implementation
                 if (gradeExist != null)
                 {
                     gradeExist.GradeAssignment = grade.GradeAssignment;
-                    gradeExist.IsFinalized = false;
+                    gradeExist.IsFinalized = grade.IsFinalized;
                     AuditHelper.UpdateAudit(gradeExist, updateGrade.CurrentUser);
                     _appDbContext.Update(gradeExist);
                 }
@@ -325,7 +325,7 @@ namespace ManageCourse.Core.Services.Implementation
                     }
                     var gradeNew = new Grade();
                     gradeNew.StudentId = student.Id;
-                    gradeNew.IsFinalized = false;
+                    gradeNew.IsFinalized = grade.IsFinalized;
                     gradeNew.AssignmentId = assignment.Id;
                     AuditHelper.CreateAudit(gradeNew, updateGrade.CurrentUser);
                     _appDbContext.Add(gradeNew);
