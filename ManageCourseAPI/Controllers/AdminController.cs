@@ -119,12 +119,8 @@ namespace ManageCourseAPI.Controllers
             var user = await _adminService.Register(registerNewUserData);
             var token = HttpUtility.UrlEncode(await _appUserManager.GenerateEmailConfirmationTokenAsync(user));
             var confirmationLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/Email/ConfirmEmail?token={token}&email={user.Email}";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(user.Email, confirmationLink);
-            if (emailResponse)
-            {
-                Console.WriteLine("Email");
-            }
+            _emailService.Send(user.Email, "Comfirm Email", confirmationLink);
+           
             var response = new SingularResponse<UserResponse>
             {
                 Result = new UserResponse(user),
@@ -193,12 +189,8 @@ namespace ManageCourseAPI.Controllers
             var user = await _adminService.Register(registerNewUserData);
             var token = HttpUtility.UrlEncode(await _appUserManager.GenerateEmailConfirmationTokenAsync(user));
             var confirmationLink = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/Email/ConfirmEmail?token={token}&email={user.Email}";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(user.Email, confirmationLink);
-            if (emailResponse)
-            {
-                Console.WriteLine("Email");
-            }
+            _emailService.Send(user.Email, "Confirm Email", confirmationLink);
+
             return Ok(new GeneralResponse<string>
             {
                 Status = ApiResponseStatus.Success,

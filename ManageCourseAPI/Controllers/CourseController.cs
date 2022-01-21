@@ -640,19 +640,8 @@ namespace ManageCourseAPI.Controllers
             var tokenClassCode = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var tokenEmail = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var inviteLink = $"{ConfigConstant.URL_CLIENT}/class-join?classToken={tokenClassCode}&role={(int)sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            //_emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
-            if (!emailResponse)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Success,
-                    Result = ResponseResult.Successfull,
-                    Content = "",
-                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-                });
-            }
+            
+            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
 
             return Ok(new GeneralResponse<string>
             {
