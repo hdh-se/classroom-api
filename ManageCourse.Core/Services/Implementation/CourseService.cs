@@ -229,6 +229,12 @@ namespace ManageCourse.Core.Services.Implementation
                                     Grade = data.Grade,
                                     Assignment = Assignment
                                 }).Where(d => d.Assignment.Id == assignmentId).Select(x => new GradeOfAssignmentResponse(x.Student, x.Grade, x.Assignment)).ToList();
+            var studentIds = result.Select(x=> x.Mssv).ToList();
+            var users = _generalModelRepository.GetQueryable<AppUser>().Where(x => studentIds.Contains(x.StudentID)).ToList();
+            foreach (var grade in result)
+            {
+                grade.Username = users.Where(u => u.StudentID == grade.Mssv).Select(u => u.UserName).FirstOrDefault();
+            }
             return result;
         }
 
@@ -299,7 +305,7 @@ namespace ManageCourse.Core.Services.Implementation
                 return false;
             }
 
-            var studentIDs = updateGrade.Grades.Select(g => g.MSSV);
+            var studentIDs = updateGrade.Grades.Select(g => g.MSSV).ToList();
             var listGradeExist = _generalModelRepository.GetQueryable<Grade>().Where(g => studentIDs.Contains(g.MSSV) && g.AssignmentId == assignment.Id).ToList();
             foreach (var grade in updateGrade.Grades)
             {
@@ -326,6 +332,8 @@ namespace ManageCourse.Core.Services.Implementation
                     var gradeNew = new Grade();
                     gradeNew.StudentId = student.Id;
                     gradeNew.IsFinalized = grade.IsFinalized;
+                    gradeNew.MSSV = student.StudentID;
+                    gradeNew.GradeAssignment = grade.GradeAssignment;
                     gradeNew.AssignmentId = assignment.Id;
                     AuditHelper.CreateAudit(gradeNew, updateGrade.CurrentUser);
                     _appDbContext.Add(gradeNew);

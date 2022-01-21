@@ -42,7 +42,7 @@ namespace ManageCourseAPI.Controllers
             _notitficationService = notitficationService;
         }
 
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         public async Task<IActionResult> GetNotificationAsync([FromQuery] NotificationQuery notificationQuery)
         {
@@ -81,6 +81,7 @@ namespace ManageCourseAPI.Controllers
                 });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("mark-seen/{id}")]
         public async Task<IActionResult> MarkSeenNotificationAsync(int id, string currentUser)
@@ -122,6 +123,7 @@ namespace ManageCourseAPI.Controllers
                 });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("mark-seen")]
         public async Task<IActionResult> MarkSeenAllNotificationAsync(string currentUser)

@@ -15,7 +15,7 @@ namespace ManageCourseAPI.WebSocket
 
         public void Run()
         {
-            this.wsksv = new WebSocketServer("ws://localhost:8080");
+            this.wsksv = new WebSocketServer("ws://localhost");
             wsksv.AddWebSocketService<MessagesService>("/Messages");
             wsksv.AddWebSocketService<NotificationsService>("/Notifications");
             wsksv.Start();

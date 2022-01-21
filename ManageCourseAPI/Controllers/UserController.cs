@@ -104,6 +104,18 @@ namespace ManageCourseAPI.Controllers
                 });
 
             }
+            
+            if (user.RoleAccount == RoleAccount.Admin)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Login failed"
+                });
+
+            }
             await SignInManager.SignInAsync(user, false);
             var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
             var tokenResponse = await tokenClient.RequestPasswordTokenAsync(request.Username, request.Password);
@@ -139,23 +151,18 @@ namespace ManageCourseAPI.Controllers
                     Message = "User not found"
                 });
             }
+            var userData = new UpdateUserProfileData();
+            userArgs.CopyPropertiesTo(userData);
 
             if (!String.IsNullOrEmpty(userArgs.StudentID))
             {
                 if (AuthDbContext.Users.Where(u => u.StudentID == userArgs.StudentID && u.Id != user.Id).Any())
                 {
-                    return Ok(new GeneralResponse<string>
-                    {
-                        Status = ApiResponseStatus.Error,
-                        Result = ResponseResult.Error,
-                        Content = "",
-                        Message = "StudentID has been used!!!"
-                    });
+                    userData.StudentID = user.StudentID;
                 }
             }
 
-            var userData = new UpdateUserProfileData();
-            userArgs.CopyPropertiesTo(userData);
+
             await UserService.UpdateProfile(user.Id, userData);
             return Ok(new GeneralResponse<UserResponse>
             {
@@ -182,11 +189,11 @@ namespace ManageCourseAPI.Controllers
                 });
             }
             var result = await AppUserManager.ChangePasswordAsync(user, changePasswordRequest.CurrentPassWord, changePasswordRequest.NewPassWord);
-            return Ok(new GeneralResponse<string>
+            return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = "",
+                Content = result,
                 Message = "Update password successfull"
             });
         }
@@ -211,8 +218,8 @@ namespace ManageCourseAPI.Controllers
 
             return Ok(new GeneralResponse<string>
             {
-                Status = ApiResponseStatus.Error,
-                Result = ResponseResult.Error,
+                Status = ApiResponseStatus.Success,
+                Result = ResponseResult.Successfull,
                 Content = "",
                 Message = "Mail reset password send successfully"
             });
