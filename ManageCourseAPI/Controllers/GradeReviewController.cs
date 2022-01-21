@@ -219,7 +219,7 @@ namespace ManageCourseAPI.Controllers
                 StudentId = gradeReview.Student != null ? gradeReview.Student.Id : 0
             };
             var notifications = await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
-            SendNotification(notifications);
+            NotificationsService.SendNotification(notifications);
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId,
                 includeNavigationPaths: "Assignments");
@@ -237,19 +237,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        private void SendNotification(ICollection<TeacherNotification> notifications)
-        {
-            foreach (var notification in notifications)
-            {
-                NotificationsService.SendNotification(notification.TeacherId, notification);
-            }
-        }
-
-        private void SendNotification(StudentNotification notification)
-        {
-            // NotificationsService.SendNotification(GeneralModelRepository.
-            //     GetQueryable<AppUser>().FirstOrDefault(s=> s.StudentID == notification.StudentId)?.Id, notification);
-        }
+      
 
         [HttpPut]
         [Route("update")]
@@ -401,7 +389,7 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = createTeacherComment.CurrentUser
             };
             var notification = await _notitficationService.CreateStudentNotification(noticeArgs);
-            SendNotification(notification);
+            NotificationsService.SendNotification(notification);
             var response = new ReviewCommentResponse(reviewComment);
             response.Teacher = new UserResponse(user);
             var studentId = QueryUserIdStudent(createTeacherComment.GradeReviewId);
@@ -611,7 +599,7 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
             var notifications = await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
-            SendNotification(notifications);
+            NotificationsService.SendNotification(notifications);
             var response = new ReviewCommentResponse(reviewComment);
             response.Student = new StudentResponse(student);
             var teachers = QueryTeacherListFrom(gradeReviewRequest.CourseId);

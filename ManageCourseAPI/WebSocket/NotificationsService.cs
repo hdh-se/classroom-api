@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ManageCourse.Core.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using WebSocketSharp;
@@ -88,6 +89,19 @@ namespace ManageCourseAPI.WebSocket
                     }.SerializeObject());
                 }
             }
+        }
+
+        public static void SendNotification(ICollection<Notification> notifications)
+        {
+            foreach (var notification in notifications)
+            {
+                NotificationsService.SendNotification(notification.UserId, notification);
+            }
+        }
+
+        public static void SendNotification(Notification notification)
+        {
+            NotificationsService.SendNotification(notification.UserId, notification);
         }
     }
 }
