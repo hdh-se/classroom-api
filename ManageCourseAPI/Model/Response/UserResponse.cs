@@ -23,6 +23,9 @@ namespace ManageCourseAPI.Model.Response
         public string PhoneNumber { get; set; }
         public string PersonalPhoneNumber { get; set; }
         public UserStatus UserStatus { get; set; }
+        public DateTime CreateOn { get; set; }
+        public string Fullname { get; set; }
+
         public UserResponse(AppUser user)
         {
             Id = user.Id;
@@ -39,8 +42,11 @@ namespace ManageCourseAPI.Model.Response
             PersonalEmail = user.PersonalEmail;
             PersonalPhoneNumber = user.PersonalPhoneNumber;
             UserStatus = user.UserStatus;
+            CreateOn = user.CreateOn;
+            this.Fullname = user.NormalizedDisplayName;
         }
-        
+
+
         public UserResponse(Student student)
         {
             StudentID = student.StudentID;
