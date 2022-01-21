@@ -210,7 +210,6 @@ namespace ManageCourseAPI.Controllers
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
             var gradeReview = await _gradeReviewService.CreateGradeReviewAsync(gradeReviewArgs);
-            //TODO create-notice
             var noticeArgs = new CreateRequestGradeReviewNotificationArgs
             {
                 CurrentUser = gradeReviewRequest.CurrentUser,
@@ -220,7 +219,7 @@ namespace ManageCourseAPI.Controllers
                 StudentId = gradeReview.Student != null ? gradeReview.Student.Id : 0
             };
             var notifications = await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
-            SendNotification((ICollection<Notification>) notifications);
+            SendNotification(notifications);
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId,
                 includeNavigationPaths: "Assignments");
@@ -238,12 +237,18 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        private void SendNotification(ICollection<Notification> notifications)
+        private void SendNotification(ICollection<TeacherNotification> notifications)
         {
             foreach (var notification in notifications)
             {
-                NotificationsService.SendNotification(notification.UserId, notification);
+                NotificationsService.SendNotification(notification.TeacherId, notification);
             }
+        }
+
+        private void SendNotification(StudentNotification notification)
+        {
+            // NotificationsService.SendNotification(GeneralModelRepository.
+            //     GetQueryable<AppUser>().FirstOrDefault(s=> s.StudentID == notification.StudentId)?.Id, notification);
         }
 
         [HttpPut]
@@ -287,6 +292,7 @@ namespace ManageCourseAPI.Controllers
             };
             var gradeReview = await _gradeReviewService.UpdateGradeReviewAsync(gradeReviewArgs);
             //TODO create-notice
+
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId,
                 includeNavigationPaths: "Assignments");
@@ -394,8 +400,8 @@ namespace ManageCourseAPI.Controllers
                     $"{user.NormalizedDisplayName} comment in your request grade review for assignment {assignment.Name}",
                 CurrentUser = createTeacherComment.CurrentUser
             };
-            await _notitficationService.CreateStudentNotification(noticeArgs);
-
+            var notification = await _notitficationService.CreateStudentNotification(noticeArgs);
+            SendNotification(notification);
             var response = new ReviewCommentResponse(reviewComment);
             response.Teacher = new UserResponse(user);
             var studentId = QueryUserIdStudent(createTeacherComment.GradeReviewId);
@@ -604,7 +610,8 @@ namespace ManageCourseAPI.Controllers
                 Message = $"{student.FullName} comment in request grade review for assignment {assignment.Name}",
                 CurrentUser = gradeReviewRequest.CurrentUser
             };
-            await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            var notifications = await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            SendNotification(notifications);
             var response = new ReviewCommentResponse(reviewComment);
             response.Student = new StudentResponse(student);
             var teachers = QueryTeacherListFrom(gradeReviewRequest.CourseId);

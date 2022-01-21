@@ -10,8 +10,6 @@ using ErrorEventArgs = WebSocketSharp.ErrorEventArgs;
 
 namespace ManageCourseAPI.WebSocket
 {
-
-
     public class NotificationsService : WebSocketBehavior
     {
         private static Dictionary<int, NotificationsService> Connections =
@@ -30,12 +28,12 @@ namespace ManageCourseAPI.WebSocket
                     Connections[id] = this;
                 }
 
-                Send(JsonConvert.SerializeObject(new Message()
+                Send(new Message()
                 {
-                    channel = "SUCCESS",
+                    channel = "CONNECTED",
 
-                    data = "CONNECTED"
-                }.SerializeObject()));
+                    data = "SUCCESS"
+                }.SerializeObject());
             }
             else
             {
@@ -88,7 +86,7 @@ namespace ManageCourseAPI.WebSocket
                         data = response,
                         receiver = reciver,
                     }.SerializeObject());
-                }                
+                }
             }
         }
     }
