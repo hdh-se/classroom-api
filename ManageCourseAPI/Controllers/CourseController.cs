@@ -549,7 +549,7 @@ namespace ManageCourseAPI.Controllers
                 var grade = new UpdateGradeSpecificArgsBase {
                     MSSV = request.Scores[i].MSSV,
                     GradeAssignment = request.Scores[i].Grade,
-                    IsFinalized = request.Scores[i].IsFinalized
+                    IsFinalized = request.IsFinalized
                 };
                 args.Grades.Add(grade);
             }
@@ -879,7 +879,7 @@ namespace ManageCourseAPI.Controllers
         }
         private async Task<bool> AddMemberIntoCourseAsync(int newMemberId, string currentUser, Role role, int courseId)
         {
-            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.Role == role && c.UserId == newMemberId && c.CourseId == courseId).Any();
+            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == newMemberId && c.CourseId == courseId).Any();
             if (courseExist)
             {
                 return false;

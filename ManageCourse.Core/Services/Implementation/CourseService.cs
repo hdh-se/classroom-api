@@ -276,7 +276,14 @@ namespace ManageCourse.Core.Services.Implementation
             var grade = _generalModelRepository.GetQueryable<Grade>().Where(s => s.AssignmentId == updateGrade.AssignmentsId && s.StudentId == student.Id).FirstOrDefault();
             if (grade == null)
             {
-                return false;
+                grade = new Grade
+                {
+                    AssignmentId = assignment.Id,
+                    StudentId = student.Id,
+                    MSSV = student.StudentID,
+                };
+                AuditHelper.CreateAudit(grade, updateGrade.CurrentUser);
+                await _generalModelRepository.Create(grade);
             }
             grade.GradeAssignment = updateGrade.GradeAssignment;
             grade.IsFinalized = updateGrade.IsFinalized;
@@ -304,6 +311,25 @@ namespace ManageCourse.Core.Services.Implementation
                     AuditHelper.UpdateAudit(gradeExist, updateGrade.CurrentUser);
                     _appDbContext.Update(gradeExist);
                 }
+                else
+                {
+                    var student = _generalModelRepository.GetQueryable<Student>().Where(s => s.StudentID == grade.MSSV).FirstOrDefault();
+                    if (student == null)
+                    {
+                        student = new Student
+                        {
+                            StudentID = grade.MSSV
+                        };
+                        AuditHelper.CreateAudit(student, updateGrade.CurrentUser);
+                        await _generalModelRepository.Create(student);
+                    }
+                    var gradeNew = new Grade();
+                    gradeNew.StudentId = student.Id;
+                    gradeNew.IsFinalized = false;
+                    gradeNew.AssignmentId = assignment.Id;
+                    AuditHelper.CreateAudit(gradeNew, updateGrade.CurrentUser);
+                    _appDbContext.Add(gradeNew);
+                }
             }
 
             await _appDbContext.SaveChangesAsync();
@@ -323,7 +349,7 @@ namespace ManageCourse.Core.Services.Implementation
                 (Grade, Assignments) => new {
                     Grade = Grade,
                     Assignment = Assignments
-                }).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId)
+                }).Where(data => data.Grade.MSSV == s.StudentID && data.Assignment.CourseId == courseId && data.Grade.IsFinalized)
                     .Select(d => new GradeSimpleResponse(d.Grade, d.Assignment)).ToList()
             }).FirstOrDefault();
             var gradeReviews = _appDbContext.GradeReviews.Where(s => result.Id == s.StudentId).ToList();

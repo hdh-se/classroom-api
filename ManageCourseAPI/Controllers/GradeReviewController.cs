@@ -241,7 +241,7 @@ namespace ManageCourseAPI.Controllers
 
             var gradeReviewExist = GeneralModelRepository
                 .GetQueryable<GradeReview>().FirstOrDefault(c =>
-                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName);
+                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName && c.Status == GradeReviewStatus.Pending);
             if (gradeReviewExist == null)
             {
                 return Ok(new GeneralResponse<string>
@@ -319,7 +319,7 @@ namespace ManageCourseAPI.Controllers
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
                 Content = "",
-                Message = "Create new grade review sucessfull"
+                Message = "Delete grade review sucessfull"
             });
         }
 
@@ -392,7 +392,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        public List<int> QueryTeacherListFrom(int courseId)
+        private List<int> QueryTeacherListFrom(int courseId)
         {
             var teachers = GeneralModelRepository
                 .GetQueryable<Course>()
