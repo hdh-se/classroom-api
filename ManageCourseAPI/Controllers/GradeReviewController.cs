@@ -153,7 +153,7 @@ namespace ManageCourseAPI.Controllers
             };
             await _gradeReviewService.ApprovalGradeReviewAsync(approvalGradeReviewArgs);
 
-            return Ok(new GeneralResponse<object>
+            var res = Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
@@ -164,6 +164,21 @@ namespace ManageCourseAPI.Controllers
                 },
                 Message = $"{approvalGradeReview.ApprovalStatus} grade review sucessfull"
             });
+
+            var teachers = QueryTeacherListFrom(approvalGradeReview.GradeReviewId);
+            var studentId = QueryUserIdStudent(approvalGradeReview.GradeReviewId);
+
+            foreach (var teacherId in teachers)
+            {
+                if (user.Id != teacherId)
+                {
+                    MessagesService.SendApproval(teacherId, res);
+                }
+            }
+
+            MessagesService.SendApproval(studentId, res);
+
+            return res;
         }
 
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -314,13 +329,16 @@ namespace ManageCourseAPI.Controllers
 
             await GeneralModelRepository.Delete<GradeReview>(gradeReviewRequest.GradeReviewId);
             //TODO create-notice
-            return Ok(new GeneralResponse<string>
+
+
+            var res = Ok(new GeneralResponse<int>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = "",
+                Content = gradeReviewRequest.GradeReviewId,
                 Message = "Create new grade review sucessfull"
             });
+            return res;
         }
 
         [HttpPost]
@@ -370,17 +388,14 @@ namespace ManageCourseAPI.Controllers
 
             var response = new ReviewCommentResponse(reviewComment);
             response.Teacher = new UserResponse(user);
-            var studentUser = GeneralModelRepository
-                .GetQueryable<AppUser>().FirstOrDefault(u => u.StudentID == student.StudentID);
-            if (studentUser != null)
-            {
-                _socket.SendComment(studentUser.Id, response);
-            }
+            var studentId = QueryUserIdStudent(createTeacherComment.GradeReviewId);
 
+            _socket.SendComment(studentId, response);
 
-            foreach (var receiver in QueryTeacherListFrom(createTeacherComment.TeacherId))
+            foreach (var teacherId in QueryTeacherListFrom(createTeacherComment.CourseId)
+                .Where(teacherId => teacherId != user.Id))
             {
-                _socket.SendComment(receiver, response);
+                _socket.SendComment(teacherId, response);
             }
 
             return Ok(new GeneralResponse<ReviewCommentResponse>
@@ -401,6 +416,17 @@ namespace ManageCourseAPI.Controllers
                 .Where(u => u.Role == Role.Teacher)
                 .Select(u => u.UserId).ToList();
             return teachers;
+        }
+
+        private int QueryUserIdStudent(int gradeReviewId)
+        {
+            var student = GeneralModelRepository
+                .GetQueryable<GradeReview>()
+                .Where(u => u.Id == gradeReviewId)
+                .Select(c => c.Student).FirstOrDefault();
+            var userId = GeneralModelRepository.GetQueryable<AppUser>().Where(x => x.StudentID == student.StudentID)
+                .Select(x => x.Id).FirstOrDefault();
+            return userId;
         }
 
         [HttpPut]
@@ -454,19 +480,16 @@ namespace ManageCourseAPI.Controllers
                 Message = "Create new comment review sucessfull"
             });
 
-            var studentId = GeneralModelRepository.GetQueryable<GradeReview>()
-                .Where(g => g.Id == updateCommentRequest.GradeReviewId)
-                .Select(g => g.Grade)
-                .Select(g => g.MSSV)
-                .Join(GeneralModelRepository
-                    .GetQueryable<AppUser>().ToList(), m => m, s => s.StudentID, (m, s) => s.Id)
-                .FirstOrDefault();
+            var studentId = QueryUserIdStudent(updateCommentRequest.GradeReviewId);
             MessagesService.UpdateComment(studentId, res);
             foreach (var teacherId in QueryTeacherListFrom(updateCommentRequest.CourseId))
             {
-                MessagesService.UpdateComment(teacherId, res);
+                if (user.Id != teacherId)
+                {
+                    MessagesService.UpdateComment(teacherId, res);
+                }
             }
-            
+
             return res;
         }
 
@@ -511,12 +534,7 @@ namespace ManageCourseAPI.Controllers
                 Content = deleteCommentRequest.ReviewCommentId,
                 Message = "Delete comment review sucessfull"
             });
-            var student = GeneralModelRepository.GetQueryable<ReviewComment>()
-                .Where(r=> r.GradeReviewId == deleteCommentRequest.GradeReviewId)
-                .Select(r => r.GradeReview)
-                .Select(g => g.Student)
-                .Join(GeneralModelRepository.GetQueryable<AppUser>().ToList(), s => s.StudentID, u => u.StudentID,
-                    (s, u) => s.Id).FirstOrDefault();
+            var student = QueryUserIdStudent(deleteCommentRequest.GradeReviewId);
             MessagesService.DeleteComment(student, res);
 
             var teachers = QueryTeacherListFrom(GeneralModelRepository.GetQueryable<GradeReview>()
@@ -525,9 +543,12 @@ namespace ManageCourseAPI.Controllers
                 .Select(g => g.Assignments)
                 .Select(a => a.Course).Select(c => c.Id).FirstOrDefault());
 
-            foreach (var teacher in teachers)
+            foreach (var teacherId in teachers)
             {
-                MessagesService.DeleteComment(teacher, res);
+                if (teacherId != user.Id)
+                {
+                    MessagesService.DeleteComment(teacherId, res);
+                }
             }
 
             return res;
@@ -577,9 +598,13 @@ namespace ManageCourseAPI.Controllers
             var response = new ReviewCommentResponse(reviewComment);
             response.Student = new StudentResponse(student);
             var teachers = QueryTeacherListFrom(gradeReviewRequest.CourseId);
-            foreach (var teacher in teachers)
+
+            foreach (var teacherId in teachers)
             {
-                _socket.SendComment(teacher, response);
+                if (teacherId != user.Id)
+                {
+                    _socket.SendComment(teacherId, response);
+                }
             }
 
             return Ok(new GeneralResponse<ReviewCommentResponse>
@@ -645,7 +670,10 @@ namespace ManageCourseAPI.Controllers
 
             foreach (var id in QueryTeacherListFrom(gradeReviewRequest.CourseId))
             {
-                MessagesService.UpdateComment(id, res);
+                if (user.Id != id)
+                {
+                    MessagesService.UpdateComment(id, res);
+                }
             }
 
             return res;
@@ -695,9 +723,13 @@ namespace ManageCourseAPI.Controllers
                 Content = deleteCommentRequest.ReviewCommentId,
                 Message = "Create new comment review sucessfull"
             });
+
             foreach (var id in QueryTeacherListFrom(deleteCommentRequest.CourseId))
             {
-                MessagesService.DeleteComment(id, res);
+                if (id != user.Id)
+                {
+                    MessagesService.DeleteComment(id, res);
+                }
             }
 
             return res;
