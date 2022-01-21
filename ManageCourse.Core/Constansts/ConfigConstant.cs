@@ -8,7 +8,7 @@ namespace ManageCourse.Core.Constansts
 {
     public static class ConfigConstant
     {
-        public static string URL_CLIENT = "https://master.dmiee442vc9x.amplifyapp.com/";
+        public static string URL_CLIENT = "https://master.dmiee442vc9x.amplifyapp.com";
         public static string URL_API = "https://managecourseapi20220118191313.azurewebsites.net";
         public static string PASSWORD_DEFAULT = "Password1234";
     }
