@@ -71,36 +71,46 @@ namespace ManageCourseAPI.WebSocket
 
         public static void AddComment<T>(int receiver, T response)
         {
-            SendResponse(receiver,response,"ADD_COMMENT");
-
+            SendResponse(receiver, response, "ADD_COMMENT");
         }
 
         public static void UpdateComment<T>(int receiver, T response)
         {
             SendResponse(receiver, response, "UPDATE_COMMENT");
-
         }
 
 
         public static void DeleteComment<T>(int receiver, T response)
         {
-            SendResponse(receiver,response,"DELETE_COMMENT");
+            SendResponse(receiver, response, "DELETE_COMMENT");
         }
 
-        private static void SendResponse<T>(int receiver, T response,string channel)
+        private static void SendResponse<T>(int receiver, T response, string channel)
         {
-            lock (Connections)
+            try
             {
-                if (Connections.ContainsKey(receiver))
+                lock (Connections)
                 {
-                    Connections[receiver].Send((new Message()
+                    if (Connections.ContainsKey(receiver))
                     {
-                        channel = channel,
-                        data = response,
-                        receiver = receiver,
-                    }.SerializeObject()));
+                        Connections[receiver].Send((new Message()
+                        {
+                            channel = channel,
+                            data = response,
+                            receiver = receiver,
+                        }.SerializeObject()));
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        public static void SendApproval<T>(int receiver, T res)
+        {
+            SendResponse(receiver, res, "APPROVAL");
         }
     }
 }
