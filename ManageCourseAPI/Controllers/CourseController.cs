@@ -24,6 +24,7 @@ using ManageCourse.Core.Model.Responses;
 using System.Data;
 using ClosedXML.Excel;
 using System.IO;
+using ManageCourseAPI.WebSocket;
 
 namespace ManageCourseAPI.Controllers
 {
@@ -34,17 +35,20 @@ namespace ManageCourseAPI.Controllers
         private readonly ICourseService _courseService;
         private readonly AppUserManager _appUserManager;
         private readonly IEmailService _emailService;
+        private readonly INotitficationService _notitficationService;
 
         public CourseController(
             IGeneralModelRepository generalModelRepository,
             DbContextContainer dbContextContainer,
             ICourseService courseService,
             IEmailService emailService,
+            INotitficationService notitficationService,
             AppUserManager appUserManager) : base(generalModelRepository, dbContextContainer)
         {
             _courseService = courseService;
             _appUserManager = appUserManager;
             _emailService = emailService;
+            _notitficationService = notitficationService;
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -62,6 +66,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
+
             var courseUsers = new CourseUserQuery
             {
                 UserId = user.Id,
@@ -73,6 +78,7 @@ namespace ManageCourseAPI.Controllers
             {
                 course.Owner = (await _appUserManager.FindByNameAsync(course.Owner)).NormalizedDisplayName;
             }
+
             return Ok(
                 new GeneralResponse<GeneralResultResponse<CourseResponse>>
                 {
@@ -100,7 +106,8 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id && c.CourseId == id).FirstOrDefault();
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.UserId == user.Id && c.CourseId == id).FirstOrDefault();
             if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>
@@ -111,6 +118,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "You haven't been joined this class"
                 });
             }
+
             var coursers = (await _courseService.GetByIdAsync(id));
             return Ok(new GeneralResponse<object>
             {
@@ -124,13 +132,15 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get class sucessfull"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments")]
-        public async Task<IActionResult> CreateNewAssignmentAsync([FromBody] CreateNewAssignmentsRequest createNewAssignmentsRequest)
+        public async Task<IActionResult> CreateNewAssignmentAsync(
+            [FromBody] CreateNewAssignmentsRequest createNewAssignmentsRequest)
         {
-            if (!(await ValidateUserInClassAsync(createNewAssignmentsRequest.CurrentUser, createNewAssignmentsRequest.CourseId, Role.Teacher)))
+            if (!(await ValidateUserInClassAsync(createNewAssignmentsRequest.CurrentUser,
+                createNewAssignmentsRequest.CourseId, Role.Teacher)))
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -140,6 +150,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Create new asssignments failed!!"
                 });
             }
+
             var args = createNewAssignmentsRequest.MapTo<CreateNewAssignmentsRequest, CreateNewAssignmentsArgs>();
             var result = await _courseService.CreateNewAssignments(args);
 
@@ -151,11 +162,12 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get class sucessfull"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("{id}/assignments/{assignmentsId}")]
-        public async Task<IActionResult> UpdateAssignmentAsync(int id,int assignmentsId, [FromBody]UpdateAssignmentsRequest updateAssignmentsRequest)
+        public async Task<IActionResult> UpdateAssignmentAsync(int id, int assignmentsId,
+            [FromBody] UpdateAssignmentsRequest updateAssignmentsRequest)
         {
             if (!(await ValidateUserInClassAsync(updateAssignmentsRequest.CurrentUser, id, Role.Teacher)))
             {
@@ -167,6 +179,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Update asssignments failed!!"
                 });
             }
+
             var args = updateAssignmentsRequest.MapTo<UpdateAssignmentsRequest, UpdateAssignmentsArgs>();
             args.Id = assignmentsId;
             var result = await _courseService.UpdateAssignments(args);
@@ -179,19 +192,23 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        private async Task<bool> ValidateUserInClassAsync(string username, int courseId, Role role = Role.None, bool isCheckOwner = false)
+        private async Task<bool> ValidateUserInClassAsync(string username, int courseId, Role role = Role.None,
+            bool isCheckOwner = false)
         {
             var user = await _appUserManager.FindByNameAsync(username);
             if (user == null)
             {
                 return false;
             }
+
             var coursers = (await _courseService.GetByIdAsync(courseId));
             if (coursers == null)
             {
                 return false;
             }
-            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.UserId == user.Id && c.CourseId == courseId).FirstOrDefault();
+
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.UserId == user.Id && c.CourseId == courseId).FirstOrDefault();
             if (courseUser == null)
             {
                 return false;
@@ -201,7 +218,7 @@ namespace ManageCourseAPI.Controllers
             {
                 return courseUser.Role == role;
             }
-            
+
             if (isCheckOwner)
             {
                 return coursers.CreateBy == username;
@@ -209,7 +226,7 @@ namespace ManageCourseAPI.Controllers
 
             return true;
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete]
         [Route("{id}/assignments/{assignmentsId}")]
@@ -225,7 +242,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Delete asssignments failed!!"
                 });
             }
-            
+
             await GeneralModelRepository.Delete<Assignments>(assignmentsId);
             return Ok(new GeneralResponse<string>
             {
@@ -251,8 +268,9 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get asssignments failed!!"
                 });
             }
+
             query.CourseId = id;
-            var result =await GetSearchResult(query, a => new AssignmentsResponse(a));
+            var result = await GetSearchResult(query, a => new AssignmentsResponse(a));
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
@@ -265,7 +283,8 @@ namespace ManageCourseAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments-sort")]
-        public async Task<IActionResult> SortAssignmentsAsync(int id, [FromBody]SortAssignmentsRequest sortAssignmentsRequest)
+        public async Task<IActionResult> SortAssignmentsAsync(int id,
+            [FromBody] SortAssignmentsRequest sortAssignmentsRequest)
         {
             if (!(await ValidateUserInClassAsync(sortAssignmentsRequest.CurrentUser, id)))
             {
@@ -277,6 +296,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Sort asssignments failed!!"
                 });
             }
+
             var args = sortAssignmentsRequest.MapTo<SortAssignmentsRequest, SortAssignmentsArgs>();
             args.CourseId = id;
             var result = _courseService.SortAssignments(args);
@@ -295,7 +315,7 @@ namespace ManageCourseAPI.Controllers
         [Route("{id}/all-grades")]
         public async Task<IActionResult> GetAllGradeAsync(int id, string currentUser)
         {
-             if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
+            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Teacher)))
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -305,13 +325,16 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get all grades asssignments failed!!"
                 });
             }
-            var result =  _courseService.GetAllGradeOfCourse(id);
-            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
+
+            var result = _courseService.GetAllGradeOfCourse(id);
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id)
+                .Select(a => new AssignmentSimpleResponse(a)).ToList();
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new { 
+                Content = new
+                {
                     header = listAssignment,
                     scores = result,
                     total = result.Count
@@ -319,13 +342,13 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get assignments sucessfully"
             });
         }
-        
+
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/all-grades/student")]
         public async Task<IActionResult> GetAllGradeOfStudentAsync(int id, string currentUser)
         {
-             if (!(await ValidateUserInClassAsync(currentUser, id, Role.Student)))
+            if (!(await ValidateUserInClassAsync(currentUser, id, Role.Student)))
             {
                 return Ok(new GeneralResponse<string>
                 {
@@ -335,15 +358,19 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get all grades asssignments failed!!"
                 });
             }
+
             var user = await _appUserManager.FindByNameAsync(currentUser);
-            var student = GeneralModelRepository.GetQueryable<Student>().Where(s => s.StudentID == user.StudentID).FirstOrDefault();
-            var result =  _courseService.GetAllGradeOfCourseForStudent(id, student.Id);
-            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
+            var student = GeneralModelRepository.GetQueryable<Student>().Where(s => s.StudentID == user.StudentID)
+                .FirstOrDefault();
+            var result = _courseService.GetAllGradeOfCourseForStudent(id, student.Id);
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id)
+                .Select(a => new AssignmentSimpleResponse(a)).ToList();
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new { 
+                Content = new
+                {
                     header = listAssignment,
                     scores = result,
                     total = 1
@@ -351,7 +378,7 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get assignments sucessfully"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/assignments/{assignmentsId}/all-grades")]
@@ -367,23 +394,26 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get all grades asssignments failed!!"
                 });
             }
-            var result =  _courseService.GetAllGradeOfAssignment((int)assignmentsId);
+
+            var result = _courseService.GetAllGradeOfAssignment((int) assignmentsId);
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = new { 
+                Content = new
+                {
                     data = result,
                     total = result.Count
                 },
                 Message = "Get assignments sucessfully"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade")]
-        public async Task<IActionResult> UpdateGradeAsync(int id, long assignmentsId, [FromForm] UpdateGradeRequest updateGrade)
+        public async Task<IActionResult> UpdateGradeAsync(int id, long assignmentsId,
+            [FromForm] UpdateGradeRequest updateGrade)
         {
             if (!(await ValidateUserInClassAsync(updateGrade.CurrentUser, id, Role.Teacher)))
             {
@@ -396,9 +426,10 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var listGrade = ConvertFileToListGrade(updateGrade.file, (int)assignmentsId);
-            var args = new UpdateGradesArgs { 
-                AssignmentId = (int)assignmentsId,
+            var listGrade = ConvertFileToListGrade(updateGrade.file, (int) assignmentsId);
+            var args = new UpdateGradesArgs
+            {
+                AssignmentId = (int) assignmentsId,
                 CourseId = id,
                 CurrentUser = updateGrade.CurrentUser,
                 Grades = listGrade
@@ -413,7 +444,7 @@ namespace ManageCourseAPI.Controllers
                 Message = "Get assignments sucessfully"
             });
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/update-student")]
@@ -432,7 +463,7 @@ namespace ManageCourseAPI.Controllers
 
             var listStudent = ConvertFileToListStudent(updateMember.file);
             var args = new UpdateMemberInClassArgs
-            { 
+            {
                 CourseId = id,
                 CurrentUser = updateMember.CurrentUser,
                 Students = listStudent
@@ -448,7 +479,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        private ICollection<Grade> ConvertFileToListGrade (IFormFile file, int assignmentId)
+        private ICollection<Grade> ConvertFileToListGrade(IFormFile file, int assignmentId)
         {
             var grades = new List<Grade>();
             if (file != null)
@@ -472,7 +503,9 @@ namespace ManageCourseAPI.Controllers
                             {
                                 continue;
                             }
-                            var grade = new Grade {
+
+                            var grade = new Grade
+                            {
                                 AssignmentId = assignmentId,
                                 GradeAssignment = gradeAssignment,
                                 MSSV = mssv
@@ -482,10 +515,11 @@ namespace ManageCourseAPI.Controllers
                     } while (sreader.NextResult());
                 }
             }
+
             return grades;
         }
 
-        private ICollection<Student> ConvertFileToListStudent (IFormFile file)
+        private ICollection<Student> ConvertFileToListStudent(IFormFile file)
         {
             var students = new List<Student>();
             if (file != null)
@@ -509,6 +543,7 @@ namespace ManageCourseAPI.Controllers
                             {
                                 continue;
                             }
+
                             var student = new Student
                             {
                                 StudentID = studentID,
@@ -519,13 +554,15 @@ namespace ManageCourseAPI.Controllers
                     } while (sreader.NextResult());
                 }
             }
+
             return students;
         }
-        
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade-normal")]
-        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeNormalRequest request)
+        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId,
+            [FromBody] UpdateGradeNormalRequest request)
         {
             if (!(await ValidateUserInClassAsync(request.CurrentUser, id, Role.Teacher)))
             {
@@ -537,8 +574,10 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get asssignments failed!!"
                 });
             }
-            var args = new UpdateGradeNormalArgs {
-                AssignmentId = (int)assignmentsId,
+
+            var args = new UpdateGradeNormalArgs
+            {
+                AssignmentId = (int) assignmentsId,
                 CourseId = id,
                 CurrentUser = request.CurrentUser,
                 Grades = new List<UpdateGradeSpecificArgsBase>()
@@ -546,15 +585,35 @@ namespace ManageCourseAPI.Controllers
 
             for (int i = 0; i < request.Scores.Count; i++)
             {
-                var grade = new UpdateGradeSpecificArgsBase {
+                var grade = new UpdateGradeSpecificArgsBase
+                {
                     MSSV = request.Scores[i].MSSV,
                     GradeAssignment = request.Scores[i].Grade,
-                    IsFinalized = request.Scores[i].IsFinalized
+                    IsFinalized = request.IsFinalized
                 };
                 args.Grades.Add(grade);
             }
 
             var result = await _courseService.UpdateGradeNormal(args);
+            if (result)
+            {
+                var user = await _appUserManager.FindByNameAsync(request.CurrentUser);
+                var studentIds = request.Scores.Select(s => s.MSSV).ToList();
+                var students = await GeneralModelRepository.GetQueryable<Student>()
+                    .Where(s => studentIds.Contains(s.StudentID)).Select(s => s.Id).ToListAsync();
+                var assignment = await GeneralModelRepository.Get<Assignments>(assignmentsId);
+                var notifications = await _notitficationService.CreateStudentNotifications(
+                    new CreateStudentNotificationsArgs
+                    {
+                        CourseId = id,
+                        StudentIds = students,
+                        Message = $"{user.NormalizedDisplayName} đã trả điểm cho bài tập {assignment.Name}",
+                        CurrentUser = request.CurrentUser
+                    });
+
+                NotificationsService.SendNotification(notifications);
+            }
+
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
@@ -567,7 +626,8 @@ namespace ManageCourseAPI.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("{id}/assignments/{assignmentsId}/update-grade-finalized")]
-        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId, [FromBody] UpdateGradeSpecificRequest request)
+        public async Task<IActionResult> UpdateGradeForStudentSpecificAsync(int id, long assignmentsId,
+            [FromBody] UpdateGradeSpecificRequest request)
         {
             if (!(await ValidateUserInClassAsync(request.CurrentUser, id, Role.Teacher)))
             {
@@ -579,13 +639,35 @@ namespace ManageCourseAPI.Controllers
                     Message = "Get asssignments failed!!"
                 });
             }
-            
-            var result = await _courseService.UpdateGradeSpecific(new UpdateGradeSpecificArgs { 
-                    AssignmentsId = (int)assignmentsId, 
-                    CourseId = id, 
-                    GradeAssignment = request.Grade,
-                    MSSV = request.MSSV,
-                    CurrentUser = request.CurrentUser});
+
+            var result = await _courseService.UpdateGradeSpecific(new UpdateGradeSpecificArgs
+            {
+                AssignmentsId = (int) assignmentsId,
+                CourseId = id,
+                IsFinalized = request.IsFinalized,
+                GradeAssignment = request.Grade,
+                MSSV = request.MSSV,
+                CurrentUser = request.CurrentUser
+            });
+
+            if (result && GeneralModelRepository.GetQueryable<AppUser>().Where(u => u.StudentID == request.MSSV).Any())
+            {
+                var user = await _appUserManager.FindByNameAsync(request.CurrentUser);
+                var student = await GeneralModelRepository.GetQueryable<Student>()
+                    .Where(s => s.StudentID == request.MSSV).FirstOrDefaultAsync();
+                var assignment = await GeneralModelRepository.Get<Assignments>(assignmentsId);
+                //TODO socket
+                var notification = await _notitficationService.CreateStudentNotification(
+                    new CreateStudentNotificationSingleArgs
+                    {
+                        CourseId = id,
+                        StudentId = student.Id,
+                        Message = $"{user.NormalizedDisplayName} đã trả điểm cho bài tập {assignment.Name}",
+                        CurrentUser = request.CurrentUser
+                    });
+                NotificationsService.SendNotification(notification);
+            }
+
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
@@ -601,24 +683,12 @@ namespace ManageCourseAPI.Controllers
         [Route("send-mail")]
         public IActionResult SendMail([FromBody] SendMailJoinToCourseRequest sendMailJoinToCourseRequest)
         {
-
             Guards.ValidEmail(sendMailJoinToCourseRequest.MailPersonReceive);
             var tokenClassCode = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var tokenEmail = StringHelper.GenerateHashString(sendMailJoinToCourseRequest.ClassCode);
             var inviteLink = $"{ConfigConstant.URL_CLIENT}/class-join?classToken={tokenClassCode}&role={(int)sendMailJoinToCourseRequest.Role}&email={tokenEmail}";
-            EmailHelper emailHelper = new EmailHelper();
-            bool emailResponse = emailHelper.SendConfirmMail(sendMailJoinToCourseRequest.MailPersonReceive, inviteLink);
-            //_emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
-            if (!emailResponse)
-            {
-                return Ok(new GeneralResponse<string>
-                {
-                    Status = ApiResponseStatus.Success,
-                    Result = ResponseResult.Successfull,
-                    Content = "",
-                    Message = $"Send mail to {sendMailJoinToCourseRequest.MailPersonReceive} failed"
-                });
-            }
+            
+            _emailService.Send(sendMailJoinToCourseRequest.MailPersonReceive, tokenClassCode, inviteLink);
 
             return Ok(new GeneralResponse<string>
             {
@@ -652,13 +722,19 @@ namespace ManageCourseAPI.Controllers
                 MaxResults = 100,
             };
             var listTeacherIds = (await GetSearchResult(getTeachersQuery, c => c.UserId)).Data;
-            var listTeacher = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listTeacherIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
+            var listTeacher = await GeneralModelRepository.GetQueryable<AppUser>()
+                .Where(user => listTeacherIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
 
             var listStudentIds = (await GetSearchResult(getStudentsQuery, c => c.UserId)).Data;
-            var listStudent = await GeneralModelRepository.GetQueryable<AppUser>().Where(user => listStudentIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
+            var listStudent = await GeneralModelRepository.GetQueryable<AppUser>()
+                .Where(user => listStudentIds.Contains(user.Id)).Select(user => new UserResponse(user)).ToListAsync();
             var listStudentCode = listStudent.Select(s => s.StudentID).ToList();
-            var listStudentCodeNotHasAccount = await GeneralModelRepository.GetQueryable<Course_Student>().Where(cs => !listStudentCode.Contains(cs.StudentCode) && cs.CourseId == id).Select(cs => cs.StudentCode).ToListAsync();
-            listStudent.AddRange(await GeneralModelRepository.GetQueryable<Student>().Where(s => listStudentCodeNotHasAccount.Contains(s.StudentID)).Select(s => new UserResponse(s)).ToListAsync());
+            var listStudentCodeNotHasAccount = await GeneralModelRepository.GetQueryable<Course_Student>()
+                .Where(cs => !listStudentCode.Contains(cs.StudentCode) && cs.CourseId == id)
+                .Select(cs => cs.StudentCode).ToListAsync();
+            listStudent.AddRange(await GeneralModelRepository.GetQueryable<Student>()
+                .Where(s => listStudentCodeNotHasAccount.Contains(s.StudentID)).Select(s => new UserResponse(s))
+                .ToListAsync());
             var memberCourseResponse = new MemberCourseResponse
             {
                 Total = listStudent.Count + listTeacher.Count,
@@ -674,15 +750,16 @@ namespace ManageCourseAPI.Controllers
                     Content = memberCourseResponse,
                     Message = "Get Member Successfull"
                 });
-
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/download-grade-board")]
         public FileResult DownloadGradeBoard(int id)
         {
             var result = _courseService.GetAllGradeOfCourse(id);
-            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id).Select(a => new AssignmentSimpleResponse(a)).ToList();
+            var listAssignment = GeneralModelRepository.GetQueryable<Assignments>().Where(a => a.CourseId == id)
+                .Select(a => new AssignmentSimpleResponse(a)).ToList();
             DataTable dt = new DataTable("GradeBoard");
             dt.Columns.Add(new DataColumn("Họ và Tên"));
             dt.Columns.Add(new DataColumn("MSSV"));
@@ -699,9 +776,10 @@ namespace ManageCourseAPI.Controllers
                 var index = 2;
                 foreach (var score in item.Grades)
                 {
-                    row[index] = score.Grade.ToString() +"/" + score.MaxGrade.ToString();
+                    row[index] = score.Grade.ToString() + "/" + score.MaxGrade.ToString();
                     index++;
                 }
+
                 dt.Rows.Add(row);
             }
 
@@ -711,11 +789,13 @@ namespace ManageCourseAPI.Controllers
                 using (MemoryStream stream = new MemoryStream())
                 {
                     wb.SaveAs(stream);
-                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "GradeBoard.xlsx");
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "GradeBoard.xlsx");
                 }
             }
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("download-template-update-member")]
         public FileResult DownloadTemplateUpdateMember()
@@ -730,11 +810,13 @@ namespace ManageCourseAPI.Controllers
                 using (MemoryStream stream = new MemoryStream())
                 {
                     wb.SaveAs(stream);
-                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TemplateUpdateMember.xlsx");
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "TemplateUpdateMember.xlsx");
                 }
             }
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("download-template-update-grade")]
         public FileResult DownloadTemplateUpdateGrade()
@@ -749,7 +831,8 @@ namespace ManageCourseAPI.Controllers
                 using (MemoryStream stream = new MemoryStream())
                 {
                     wb.SaveAs(stream);
-                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TemplateUpdateGrade.xlsx");
+                    return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "TemplateUpdateGrade.xlsx");
                 }
             }
         }
@@ -769,6 +852,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
+
             var args = new CreateCourseArgs
             {
                 SubjectId = courseRequest.SubjectId,
@@ -794,7 +878,8 @@ namespace ManageCourseAPI.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("add-member/invite-link")]
-        public async Task<IActionResult> AddStudentIntoCousersByLinkAsync([FromBody] AddMemberIntoCourseByLinkRequest courseRequest)
+        public async Task<IActionResult> AddStudentIntoCousersByLinkAsync(
+            [FromBody] AddMemberIntoCourseByLinkRequest courseRequest)
         {
             var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
             if (user == null)
@@ -807,10 +892,10 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user"
                 });
             }
-            
+
             var course = GeneralModelRepository.GetQueryable<Course>().AsEnumerable()
                 .Where(c => !String.IsNullOrEmpty(c.CourseCode) &&
-                StringHelper.Check(courseRequest.Token,c.CourseCode))
+                            StringHelper.Check(courseRequest.Token, c.CourseCode))
                 .FirstOrDefault();
             if (course == null)
             {
@@ -848,7 +933,6 @@ namespace ManageCourseAPI.Controllers
             var invitee = await _appUserManager.FindByNameAsync(courseRequest.Invitee);
             if (invitee == null)
             {
-
                 return Ok(new GeneralResponse<string>
                 {
                     Status = ApiResponseStatus.Error,
@@ -877,13 +961,16 @@ namespace ManageCourseAPI.Controllers
                 Message = "Add member failed"
             });
         }
+
         private async Task<bool> AddMemberIntoCourseAsync(int newMemberId, string currentUser, Role role, int courseId)
         {
-            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.Role == role && c.UserId == newMemberId && c.CourseId == courseId).Any();
+            var courseExist = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.UserId == newMemberId && c.CourseId == courseId).Any();
             if (courseExist)
             {
                 return false;
             }
+
             var courseUser = new Course_User
             {
                 UserId = newMemberId,
@@ -896,13 +983,16 @@ namespace ManageCourseAPI.Controllers
             _ = await GeneralModelRepository.Create<Course_User>(courseUser);
             return true;
         }
+
         private async Task<bool> AddMemberIntoCourseAsync(AppUser appUser, Role role, int courseId)
         {
-            var courseExist = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.Role == role && c.UserId == appUser.Id && c.CourseId == courseId).Any();
+            var courseExist = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.Role == role && c.UserId == appUser.Id && c.CourseId == courseId).Any();
             if (courseExist)
             {
                 return false;
             }
+
             var courseUser = new Course_User
             {
                 UserId = appUser.Id,
@@ -918,7 +1008,8 @@ namespace ManageCourseAPI.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("update-role-member")]
-        public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] UpdateRoleMemberInCourseRequest courseRequest)
+        public async Task<IActionResult> RemoveStudentInCousersAsync(
+            [FromBody] UpdateRoleMemberInCourseRequest courseRequest)
         {
             var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
             if (user == null)
@@ -955,7 +1046,8 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
             if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>
@@ -966,6 +1058,7 @@ namespace ManageCourseAPI.Controllers
                     Message = "Not found user in class"
                 });
             }
+
             courseUser.Role = courseRequest.Role;
             await GeneralModelRepository.Update<Course_User>(courseUser);
 
@@ -980,7 +1073,8 @@ namespace ManageCourseAPI.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("remove-member")]
-        public async Task<IActionResult> RemoveStudentInCousersAsync([FromBody] RemoveMemberInCourseRequest courseRequest)
+        public async Task<IActionResult> RemoveStudentInCousersAsync(
+            [FromBody] RemoveMemberInCourseRequest courseRequest)
         {
             var user = await _appUserManager.FindByNameAsync(courseRequest.CurrentUser);
             if (user == null)
@@ -1017,7 +1111,8 @@ namespace ManageCourseAPI.Controllers
                 });
             }
 
-            var courseUser = GeneralModelRepository.GetQueryable<Course_User>().Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
+            var courseUser = GeneralModelRepository.GetQueryable<Course_User>()
+                .Where(c => c.CourseId == courseRequest.CourseId && c.UserId == courseRequest.UserId).FirstOrDefault();
             if (courseUser == null)
             {
                 return Ok(new GeneralResponse<string>

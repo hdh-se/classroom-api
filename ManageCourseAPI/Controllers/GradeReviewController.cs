@@ -45,6 +45,7 @@ namespace ManageCourseAPI.Controllers
             _socket = socket;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("")]
         public async Task<IActionResult> GetGradeReviewAsync([FromQuery] GradeReviewQuery gradeReviewQuery)
@@ -82,6 +83,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("comments")]
         public async Task<IActionResult> GetGradeReviewCommmentsAsync(
@@ -125,6 +127,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("approval")]
         public async Task<IActionResult> ApprovalGradeReviewAsync(
@@ -181,7 +184,7 @@ namespace ManageCourseAPI.Controllers
             return res;
         }
 
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("")]
         public async Task<IActionResult> CreateGradeReviewAsync([FromBody] CreateGradeReviewRequest gradeReviewRequest)
@@ -237,6 +240,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("update")]
         public async Task<IActionResult> UpdateGradeReviewAsync([FromBody] UpdateGradeReviewRequest gradeReviewRequest)
@@ -256,7 +260,7 @@ namespace ManageCourseAPI.Controllers
 
             var gradeReviewExist = GeneralModelRepository
                 .GetQueryable<GradeReview>().FirstOrDefault(c =>
-                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName);
+                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName && c.Status == GradeReviewStatus.Pending);
             if (gradeReviewExist == null)
             {
                 return Ok(new GeneralResponse<string>
@@ -296,6 +300,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete]
         [Route("delete")]
         public async Task<IActionResult> DeleteGradeReviewAsync([FromBody] DeleteGradeReviewRequest gradeReviewRequest)
@@ -336,11 +341,12 @@ namespace ManageCourseAPI.Controllers
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
                 Content = gradeReviewRequest.GradeReviewId,
-                Message = "Create new grade review sucessfull"
+                Message = "Delete grade review sucessfull"
             });
             return res;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("teacher-comment")]
         public async Task<IActionResult> CreateTeacherCommentAsync(
@@ -429,6 +435,7 @@ namespace ManageCourseAPI.Controllers
             return userId;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("teacher-comment/update")]
         public async Task<IActionResult> UpdateTeacherCommentAsync([FromBody] UpdateCommentRequest updateCommentRequest)
@@ -493,6 +500,7 @@ namespace ManageCourseAPI.Controllers
             return res;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete]
         [Route("teacher-comment/delete")]
         public async Task<IActionResult> DeleteTeacherCommentAsync([FromBody] DeleteCommentRequest deleteCommentRequest)
@@ -554,6 +562,7 @@ namespace ManageCourseAPI.Controllers
             return res;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [Route("student-comment")]
         public async Task<IActionResult> CreateStudentCommentAsync(
@@ -616,6 +625,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut]
         [Route("student-comment/update")]
         public async Task<IActionResult> UpdateStudentCommentAsync([FromBody] UpdateCommentRequest gradeReviewRequest)
@@ -679,6 +689,7 @@ namespace ManageCourseAPI.Controllers
             return res;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete]
         [Route("student-comment/delete")]
         public async Task<IActionResult> DeleteStudentCommentAsync([FromBody] DeleteCommentRequest deleteCommentRequest)

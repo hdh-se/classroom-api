@@ -25,14 +25,8 @@ namespace ManageCourse.Core.Services.Implementation
             _userManager = userManager;
             _generalModelRepository = generalModelRepository;
         }
-        public async Task<StudentNotification> CreateFinalDecisionGradeReviewNotification(CreateFinalDecisionGradeReviewNotificationArgs notificationArgs)
+        public async Task<Notification> CreateFinalDecisionGradeReviewNotification(CreateFinalDecisionGradeReviewNotificationArgs notificationArgs)
         {
-            var studentNotification = new StudentNotification
-            {
-                Message = notificationArgs.Message,
-                StudentId = notificationArgs.StudentId
-            };
-            AuditHelper.CreateAudit(studentNotification, notificationArgs.CurrentUser);
             var notification = new Notification
             {
                 Message = notificationArgs.Message,
@@ -46,17 +40,16 @@ namespace ManageCourse.Core.Services.Implementation
             };
             AuditHelper.CreateAudit(notification, notificationArgs.CurrentUser);
             _ = await _generalModelRepository.Create(notification);
-            return studentNotification;
+            return notification;
         }
 
-        public async Task<ICollection<StudentNotification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs)
+        public async Task<ICollection<Notification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs)
         {
             var grade = await _generalModelRepository.Get<Grade>(createGradeFinallizeNotificationArgs.GradeId);
             var course = await _appDbContext.Courses.Where(x => x.Id == grade.Assignments.CourseId).FirstOrDefaultAsync();
             var students = await _appDbContext.Course_Students.Where(x => x.CourseId == course.Id).Select(x => new { StudentId = x.StudentId, StudentCode = x.StudentCode }).ToListAsync();
             var studentCodes = students.Select(x => x.StudentCode).ToList();
             var userIds = await _generalModelRepository.GetQueryable<AppUser>().Where(x => studentCodes.Contains(x.StudentID)).Select(x => x.Id).ToListAsync();
-            var studentNotifications = new List<StudentNotification>();
             var notifications = new List<Notification>();
            
             foreach (var userId in userIds)
@@ -74,20 +67,13 @@ namespace ManageCourse.Core.Services.Implementation
             }
             await _appDbContext.Notifications.AddRangeAsync(notifications);
             await _appDbContext.SaveChangesAsync();
-            return studentNotifications;
+            return notifications;
         }
 
-        public async Task<StudentNotification> CreateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs)
+        public async Task<Notification> CreateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs)
         {
             var student = _appDbContext.Students.Where(x => x.Id == studentNotificationSingleArgs.StudentId).FirstOrDefault();
             var userId = await _generalModelRepository.GetQueryable<AppUser>().Where(x => student.StudentID == x.StudentID).Select(x => x.Id).FirstOrDefaultAsync();
-
-            var studentNotification = new StudentNotification
-            {
-                Message = studentNotificationSingleArgs.Message,
-                StudentId = studentNotificationSingleArgs.StudentId
-            };
-            AuditHelper.CreateAudit(studentNotification, studentNotificationSingleArgs.CurrentUser);
             var notification = new Notification
             {
                 Message = studentNotificationSingleArgs.Message,
@@ -101,10 +87,10 @@ namespace ManageCourse.Core.Services.Implementation
             };
             AuditHelper.CreateAudit(notification, studentNotificationSingleArgs.CurrentUser);
             _ = await _generalModelRepository.Create(notification);
-            return studentNotification;
+            return notification;
         }
 
-        public async Task<ICollection<TeacherNotification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs)
+        public async Task<ICollection<Notification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs)
         {
             var gradeReview = await _generalModelRepository.Get<GradeReview>(notificationArgs.GradeReviewId);
             var grade = await _generalModelRepository.Get<Grade>(gradeReview.GradeId);
@@ -112,18 +98,9 @@ namespace ManageCourse.Core.Services.Implementation
             var assignment = await _generalModelRepository.Get<Assignments>(gradeReview.Grade.AssignmentId);
             var course = await _appDbContext.Courses.Where(x => x.Id == assignment.CourseId).FirstOrDefaultAsync();
             var teacherIds = await _appDbContext.Course_Users.Where(x => x.CourseId == course.Id && x.Role == Role.Teacher).Select(x => x.UserId).ToListAsync();
-            var teacherNotifications = new List<TeacherNotification>();
             var notifications = new List<Notification>();
             foreach (var teacherId in teacherIds)
             {
-                var teacherNotification = new TeacherNotification
-                {
-                    Message = notificationArgs.Message,
-                    TeacherId = teacherId
-                };
-                AuditHelper.CreateAudit(teacherNotification, notificationArgs.CurrentUser);
-                teacherNotifications.Add(teacherNotification); 
-                
                 var notification = new Notification
                 {
                     Message = notificationArgs.Message,
@@ -140,15 +117,14 @@ namespace ManageCourse.Core.Services.Implementation
             }
             await _appDbContext.Notifications.AddRangeAsync(notifications);
             await _appDbContext.SaveChangesAsync();
-            return teacherNotifications;
+            return notifications;
         }
 
-        public async Task<ICollection<StudentNotification>> CreateStudentNotifications(CreateStudentNotificationsArgs studentNotificationSingleArgs)
+        public async Task<ICollection<Notification>> CreateStudentNotifications(CreateStudentNotificationsArgs studentNotificationSingleArgs)
         {
             var students = await _appDbContext.Course_Students.Where(x => studentNotificationSingleArgs.StudentIds.Contains(x.StudentId)).Select(x => new { StudentId = x.StudentId, StudentCode = x.StudentCode }).ToListAsync();
             var studentCodes = students.Select(x => x.StudentCode).ToList();
             var userIds = await _generalModelRepository.GetQueryable<AppUser>().Where(x => studentCodes.Contains(x.StudentID)).Select(x => x.Id).ToListAsync();
-            var studentNotifications = new List<StudentNotification>();
             var notifications = new List<Notification>();
 
             foreach (var userId in userIds)
@@ -166,14 +142,13 @@ namespace ManageCourse.Core.Services.Implementation
             }
             await _appDbContext.Notifications.AddRangeAsync(notifications);
             await _appDbContext.SaveChangesAsync();
-            return studentNotifications;
+            return notifications;
         }
-        public async Task<ICollection<StudentNotification>> CreateStudentOfCourseNotifications(CreateStudentOfCourseNotificationsArgs notificationArgs)
+        public async Task<ICollection<Notification>> CreateStudentOfCourseNotifications(CreateStudentOfCourseNotificationsArgs notificationArgs)
         {
             var students = await _appDbContext.Course_Students.Where(x => notificationArgs.CourseId == x.CourseId).Select(x => new { StudentId = x.StudentId, StudentCode = x.StudentCode }).ToListAsync();
             var studentCodes = students.Select(x => x.StudentCode).ToList();
             var userIds = await _generalModelRepository.GetQueryable<AppUser>().Where(x => studentCodes.Contains(x.StudentID)).Select(x => x.Id).ToListAsync();
-            var studentNotifications = new List<StudentNotification>();
             var notifications = new List<Notification>();
 
             foreach (var userId in userIds)
@@ -191,10 +166,10 @@ namespace ManageCourse.Core.Services.Implementation
             }
             await _appDbContext.Notifications.AddRangeAsync(notifications);
             await _appDbContext.SaveChangesAsync();
-            return studentNotifications;
+            return notifications;
         }
 
-        public Task<StudentNotification> UpdateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs)
+        public Task<Notification> UpdateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs)
         {
             throw new NotImplementedException();
         }

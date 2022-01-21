@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ManageCourse.Core.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using WebSocketSharp;
@@ -10,8 +11,6 @@ using ErrorEventArgs = WebSocketSharp.ErrorEventArgs;
 
 namespace ManageCourseAPI.WebSocket
 {
-
-
     public class NotificationsService : WebSocketBehavior
     {
         private static Dictionary<int, NotificationsService> Connections =
@@ -30,12 +29,12 @@ namespace ManageCourseAPI.WebSocket
                     Connections[id] = this;
                 }
 
-                Send(JsonConvert.SerializeObject(new Message()
+                Send(new Message()
                 {
-                    channel = "SUCCESS",
+                    channel = "CONNECTED",
 
-                    data = "CONNECTED"
-                }.SerializeObject()));
+                    data = "SUCCESS"
+                }.SerializeObject());
             }
             else
             {
@@ -88,8 +87,21 @@ namespace ManageCourseAPI.WebSocket
                         data = response,
                         receiver = reciver,
                     }.SerializeObject());
-                }                
+                }
             }
+        }
+
+        public static void SendNotification(ICollection<Notification> notifications)
+        {
+            foreach (var notification in notifications)
+            {
+                NotificationsService.SendNotification(notification.UserId, notification);
+            }
+        }
+
+        public static void SendNotification(Notification notification)
+        {
+            NotificationsService.SendNotification(notification.UserId, notification);
         }
     }
 }
