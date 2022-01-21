@@ -89,18 +89,26 @@ namespace ManageCourseAPI.WebSocket
 
         private static void SendResponse<T>(int receiver, T response,string channel)
         {
-            lock (Connections)
+            try
             {
-                if (Connections.ContainsKey(receiver))
+                lock (Connections)
                 {
-                    Connections[receiver].Send((new Message()
+                    if (Connections.ContainsKey(receiver))
                     {
-                        channel = channel,
-                        data = response,
-                        receiver = receiver,
-                    }.SerializeObject()));
+                        Connections[receiver].Send((new Message()
+                        {
+                            channel = channel,
+                            data = response,
+                            receiver = receiver,
+                        }.SerializeObject()));
+                    }
                 }
             }
+            catch (Exception e)
+            {
+
+            }
+          
         }
     }
 }

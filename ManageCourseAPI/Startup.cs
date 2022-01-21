@@ -125,7 +125,6 @@ namespace ManageCourseAPI
             });
             services.AddScoped<AppUserManager>();
             services.AddScoped<IEmailService, EmailService>();
-            services.AddSingleton<IWebSocket, WebSocket.WebSocket>();
 
             services.AddScoped<AppUserStore>();
             services.TryAddScoped<ICourseService, CourseService>();
@@ -170,6 +169,9 @@ namespace ManageCourseAPI
                             .AllowAnyHeader();
                     });
             });
+
+            services.AddScoped<IWebSocket, WebSocket.WebSocket>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -192,8 +194,12 @@ namespace ManageCourseAPI
             app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
 
        
-            applicationLifetime.ApplicationStarted.Register(()=> 
-                app.ApplicationServices.GetService<IWebSocket>()?.Run());
+            applicationLifetime.ApplicationStarted.Register(()=>
+                Task.Run(() =>
+                {
+                    app.ApplicationServices.GetService<IWebSocket>()?.Run();
+                })
+               );
             applicationLifetime.ApplicationStopped.Register(() =>
                 app.ApplicationServices.GetService<IWebSocket>()?.Stop());
         }

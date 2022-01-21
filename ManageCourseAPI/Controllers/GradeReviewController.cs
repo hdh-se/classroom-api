@@ -392,7 +392,7 @@ namespace ManageCourseAPI.Controllers
             });
         }
 
-        public List<int> QueryTeacherListFrom(int courseId)
+        private List<int> QueryTeacherListFrom(int courseId)
         {
             var teachers = GeneralModelRepository
                 .GetQueryable<Course>()
