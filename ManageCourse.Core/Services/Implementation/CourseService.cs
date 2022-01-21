@@ -229,6 +229,12 @@ namespace ManageCourse.Core.Services.Implementation
                                     Grade = data.Grade,
                                     Assignment = Assignment
                                 }).Where(d => d.Assignment.Id == assignmentId).Select(x => new GradeOfAssignmentResponse(x.Student, x.Grade, x.Assignment)).ToList();
+            var studentIds = result.Select(x=> x.Mssv).ToList();
+            var users = _generalModelRepository.GetQueryable<AppUser>().Where(x => studentIds.Contains(x.StudentID)).ToList();
+            foreach (var grade in result)
+            {
+                grade.Username = users.Where(u => u.StudentID == grade.Mssv).Select(u => u.UserName).FirstOrDefault();
+            }
             return result;
         }
 

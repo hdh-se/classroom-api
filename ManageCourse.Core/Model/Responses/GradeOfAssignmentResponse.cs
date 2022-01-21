@@ -20,6 +20,7 @@ namespace ManageCourse.Core.Model.Responses
         public string Mssv { get; set; }
         public string Name { get; set; }
         public float Grade { get; set; }
+        public string Username { get; set; }
         public int MaxGrade { get; set; }
     }
 }

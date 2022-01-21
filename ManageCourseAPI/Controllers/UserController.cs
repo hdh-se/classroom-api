@@ -104,6 +104,18 @@ namespace ManageCourseAPI.Controllers
                 });
 
             }
+            
+            if (user.RoleAccount == RoleAccount.Admin)
+            {
+                return Ok(new GeneralResponse<string>
+                {
+                    Status = ApiResponseStatus.Error,
+                    Result = ResponseResult.Error,
+                    Content = "",
+                    Message = "Login failed"
+                });
+
+            }
             await SignInManager.SignInAsync(user, false);
             var tokenClient = new TokenClient(new HttpClient() { BaseAddress = new Uri($"{HttpContext.Request.Scheme}://{HttpContext.Request.Host}/connect/token") }, new TokenClientOptions { ClientId = "courseclient", ClientSecret = "CourseApi" });
             var tokenResponse = await tokenClient.RequestPasswordTokenAsync(request.Username, request.Password);

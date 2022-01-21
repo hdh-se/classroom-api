@@ -752,6 +752,7 @@ namespace ManageCourseAPI.Controllers
                 });
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("{id}/download-grade-board")]
         public FileResult DownloadGradeBoard(int id)
@@ -794,6 +795,7 @@ namespace ManageCourseAPI.Controllers
             }
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("download-template-update-member")]
         public FileResult DownloadTemplateUpdateMember()
@@ -814,6 +816,7 @@ namespace ManageCourseAPI.Controllers
             }
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("download-template-update-grade")]
         public FileResult DownloadTemplateUpdateGrade()
