@@ -219,7 +219,8 @@ namespace ManageCourseAPI.Controllers
                     $"{gradeReview.Student?.FullName} create new grade review for {gradeReview?.Grade?.Assignments?.Name}",
                 StudentId = gradeReview.Student != null ? gradeReview.Student.Id : 0
             };
-            await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            var notifications = await _notitficationService.CreateRequestGradeReviewNotification(noticeArgs);
+            SendNotification((ICollection<Notification>) notifications);
             var response = new GradeReviewResponse(gradeReview);
             var grade = await GeneralModelRepository.Get<Grade>(gradeReviewRequest.GradeId,
                 includeNavigationPaths: "Assignments");
@@ -235,6 +236,14 @@ namespace ManageCourseAPI.Controllers
                 Content = response,
                 Message = "Create new grade review successfull"
             });
+        }
+
+        private void SendNotification(ICollection<Notification> notifications)
+        {
+            foreach (var notification in notifications)
+            {
+                NotificationsService.SendNotification(notification.UserId, notification);
+            }
         }
 
         [HttpPut]
@@ -256,7 +265,8 @@ namespace ManageCourseAPI.Controllers
 
             var gradeReviewExist = GeneralModelRepository
                 .GetQueryable<GradeReview>().FirstOrDefault(c =>
-                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName && c.Status == GradeReviewStatus.Pending);
+                    c.Id == gradeReviewRequest.GradeReviewId && c.CreateBy == user.UserName &&
+                    c.Status == GradeReviewStatus.Pending);
             if (gradeReviewExist == null)
             {
                 return Ok(new GeneralResponse<string>
