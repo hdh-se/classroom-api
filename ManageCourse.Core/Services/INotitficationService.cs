@@ -10,12 +10,12 @@ namespace ManageCourse.Core.Services
 {
     public interface INotitficationService
     {
-        public Task<StudentNotification> CreateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs);
-        public Task<StudentNotification> UpdateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs);
-        public Task<ICollection<StudentNotification>> CreateStudentNotifications(CreateStudentNotificationsArgs studentNotificationSingleArgs);
-        public Task<ICollection<StudentNotification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs);
-        public Task<StudentNotification> CreateFinalDecisionGradeReviewNotification(CreateFinalDecisionGradeReviewNotificationArgs notificationArgs);
-        public Task<ICollection<TeacherNotification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs);
-        public Task<ICollection<StudentNotification>> CreateStudentOfCourseNotifications(CreateStudentOfCourseNotificationsArgs notificationArgs);
+        public Task<Notification> CreateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs);
+        public Task<Notification> UpdateStudentNotification(CreateStudentNotificationSingleArgs studentNotificationSingleArgs);
+        public Task<ICollection<Notification>> CreateStudentNotifications(CreateStudentNotificationsArgs studentNotificationSingleArgs);
+        public Task<ICollection<Notification>> CreateGradeFinallizeNotification(CreateGradeFinallizeNotificationArgs createGradeFinallizeNotificationArgs);
+        public Task<Notification> CreateFinalDecisionGradeReviewNotification(CreateFinalDecisionGradeReviewNotificationArgs notificationArgs);
+        public Task<ICollection<Notification>> CreateRequestGradeReviewNotification(CreateRequestGradeReviewNotificationArgs notificationArgs);
+        public Task<ICollection<Notification>> CreateStudentOfCourseNotifications(CreateStudentOfCourseNotificationsArgs notificationArgs);
     }
 }
