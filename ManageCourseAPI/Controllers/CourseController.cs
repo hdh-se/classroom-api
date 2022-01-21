@@ -34,17 +34,20 @@ namespace ManageCourseAPI.Controllers
         private readonly ICourseService _courseService;
         private readonly AppUserManager _appUserManager;
         private readonly IEmailService _emailService;
+        private readonly INotitficationService _notitficationService;
 
         public CourseController(
             IGeneralModelRepository generalModelRepository,
             DbContextContainer dbContextContainer,
             ICourseService courseService,
             IEmailService emailService,
+            INotitficationService notitficationService,
             AppUserManager appUserManager) : base(generalModelRepository, dbContextContainer)
         {
             _courseService = courseService;
             _appUserManager = appUserManager;
             _emailService = emailService;
+            _notitficationService = notitficationService;
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -555,6 +558,21 @@ namespace ManageCourseAPI.Controllers
             }
 
             var result = await _courseService.UpdateGradeNormal(args);
+            if (result)
+            {
+                var user = await _appUserManager.FindByNameAsync(request.CurrentUser);
+                var studentIds = request.Scores.Select(s => s.MSSV).ToList();
+                var students = await GeneralModelRepository.GetQueryable<Student>().Where(s => studentIds.Contains(s.StudentID)).Select(s => s.Id).ToListAsync();
+                var assignment = await GeneralModelRepository.Get<Assignments>(assignmentsId);
+                //TODO socket
+                _notitficationService.CreateStudentNotifications(new CreateStudentNotificationsArgs
+                {
+                    CourseId = id,
+                    StudentIds = students,
+                    Message = $"{user.NormalizedDisplayName} đã trả điểm cho bài tập {assignment.Name}",
+                    CurrentUser = request.CurrentUser
+                });
+            }
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
@@ -583,9 +601,25 @@ namespace ManageCourseAPI.Controllers
             var result = await _courseService.UpdateGradeSpecific(new UpdateGradeSpecificArgs { 
                     AssignmentsId = (int)assignmentsId, 
                     CourseId = id, 
+                    IsFinalized = request.IsFinalized,
                     GradeAssignment = request.Grade,
                     MSSV = request.MSSV,
                     CurrentUser = request.CurrentUser});
+
+            if (result && GeneralModelRepository.GetQueryable<AppUser>().Where(u => u.StudentID == request.MSSV).Any())
+            {
+                var user = await _appUserManager.FindByNameAsync(request.CurrentUser);
+                var student = await GeneralModelRepository.GetQueryable<Student>().Where(s => s.StudentID == request.MSSV).FirstOrDefaultAsync();
+                var assignment = await GeneralModelRepository.Get<Assignments>(assignmentsId);
+                //TODO socket
+                _notitficationService.CreateStudentNotification(new CreateStudentNotificationSingleArgs
+                {
+                    CourseId = id,
+                    StudentId = student.Id,
+                    Message = $"{user.NormalizedDisplayName} đã trả điểm cho bài tập {assignment.Name}",
+                    CurrentUser = request.CurrentUser
+                });
+            }
             return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
