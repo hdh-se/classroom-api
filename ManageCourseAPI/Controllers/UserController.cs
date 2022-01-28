@@ -189,11 +189,11 @@ namespace ManageCourseAPI.Controllers
                 });
             }
             var result = await AppUserManager.ChangePasswordAsync(user, changePasswordRequest.CurrentPassWord, changePasswordRequest.NewPassWord);
-            return Ok(new GeneralResponse<string>
+            return Ok(new GeneralResponse<object>
             {
                 Status = ApiResponseStatus.Success,
                 Result = ResponseResult.Successfull,
-                Content = "",
+                Content = result,
                 Message = "Update password successfull"
             });
         }

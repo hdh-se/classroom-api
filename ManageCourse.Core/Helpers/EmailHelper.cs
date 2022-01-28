@@ -27,7 +27,7 @@ namespace ManageCourse.Core.Helpers
         private readonly int SmtpPort = 587;
         private readonly string SmtpUser = "ledungpython@gmail.com";
         // TODO: CHANGE PASS
-        private readonly string SmtpPass = "Mystrongpassword00@";
+        private readonly string SmtpPass = "Mystrongpassword00@1999";
 
         public bool SendConfirmMail(string userEmail, string confirmationLink, string subject = "Confirm your email")
         {
